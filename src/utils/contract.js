@@ -15,11 +15,27 @@ export const getNetworkConfig = async () => {
         // Map chain IDs to network names
         if (network.chainId === 1) networkName = 'mainnet';
         else if (network.chainId === 5) networkName = 'goerli';
+        else if (network.chainId === 11155111) networkName = 'sepolia';
         else if (network.chainId === 1337 || network.chainId === 31337) networkName = 'localhost';
         else networkName = network.name !== 'unknown' ? network.name : 'localhost';
         
-        // Use dynamic import instead of require
-        const deploymentInfo = await import(`../deployments/${networkName}.json`);
+        // Import deployment info using a more reliable approach for production builds
+        let deploymentInfo;
+        try {
+          // Preload specific network deployments to avoid dynamic import issues
+          if (networkName === 'localhost') {
+            deploymentInfo = await import('../deployments/localhost.json');
+          } else if (networkName === 'goerli') {
+            deploymentInfo = await import('../deployments/goerli.json');
+          } else if (networkName === 'sepolia') {
+            deploymentInfo = await import('../deployments/sepolia.json');
+          } else {
+            throw new Error(`No deployment for network: ${networkName}`);
+          }
+        } catch (importError) {
+          console.error(`Error importing deployment for ${networkName}:`, importError);
+          throw new Error(`Failed to load deployment for ${networkName}`);
+        }
         
         console.log(`Connected to ${networkName} network with chain ID ${network.chainId}`);
         
