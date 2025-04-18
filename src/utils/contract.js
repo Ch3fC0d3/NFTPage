@@ -9,20 +9,29 @@ export const getNetworkConfig = async () => {
   return provider.getNetwork()
     .then(async network => {
       try {
-        // Try to load deployment info for the current network
-        const networkName = network.name !== 'unknown' ? network.name : 'localhost';
+        // Map chainId to network name
+        let networkName = 'localhost';
+        
+        // Map chain IDs to network names
+        if (network.chainId === 1) networkName = 'mainnet';
+        else if (network.chainId === 5) networkName = 'goerli';
+        else if (network.chainId === 1337 || network.chainId === 31337) networkName = 'localhost';
+        else networkName = network.name !== 'unknown' ? network.name : 'localhost';
         
         // Use dynamic import instead of require
         const deploymentInfo = await import(`../deployments/${networkName}.json`);
         
+        console.log(`Connected to ${networkName} network with chain ID ${network.chainId}`);
+        
         return { 
           contractAddress: deploymentInfo.default.contractAddress,
           contractAbi: contractAbi.abi,
-          chainId: network.chainId
+          chainId: network.chainId,
+          networkName
         };
       } catch (error) {
         console.error("Failed to load contract deployment info:", error);
-        throw new Error("Contract not deployed to this network");
+        throw new Error(`Contract not deployed to network with chain ID ${network.chainId}`);
       }
     });
 };
