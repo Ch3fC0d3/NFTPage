@@ -7,18 +7,11 @@
     "node": "18.x"
   },
   "scripts": {
-    "dev": "webpack serve --mode development --config webpack.config.cjs",
-    "build": "webpack --mode production --config webpack.config.cjs",
-    "lint": "eslint .",
-    "test": "hardhat test",
-    "compile": "hardhat compile",
-    "deploy:localhost": "hardhat run scripts/deploy.cjs --network localhost",
-    "deploy:goerli": "hardhat run scripts/deploy.cjs --network goerli",
-    "deploy:sepolia": "hardhat run scripts/deploy.cjs --network sepolia",
-    "node": "hardhat node",
-    "do:build": "npm install webpack webpack-cli html-webpack-plugin && npm run build",
+    "dev": "webpack serve --mode development",
+    "build": "webpack",
     "postbuild": "node -e \"require('fs-extra').copySync('public', 'dist', {overwrite: true})\"",
-    "start": "node server.cjs"
+    "start": "node server.cjs",
+    "do:build": "npm install webpack webpack-cli html-webpack-plugin babel-loader @babel/core @babel/preset-env @babel/preset-react buffer stream-browserify process && npm run build"
   },
   "dependencies": {
     "bootstrap": "^5.3.2",
