@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-// Import from our new contractData.js file instead
+// Import from our new sepoliaContract.js file
 import { 
   getContract, 
   getMintPrice, 
   getCurrentSupply, 
-  getMaxSupply 
-} from "../utils/contractData.js";
+  getMaxSupply,
+  isSepoliaNetwork
+} from "../utils/sepoliaContract.js";
 
 const useDirectContract = (signer, provider) => {
   const [state, setState] = useState({

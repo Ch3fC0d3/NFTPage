@@ -5,8 +5,8 @@ import toast from 'react-hot-toast';
 import useWallet from '../hooks/useWallet';
 // Import the direct contract hook
 import useDirectContract from '../hooks/useDirectContract';
-// Import the new mint function from our mintUtils
-import { mintNFT } from '../utils/mintUtils';
+// Import directly from our sepoliaContract.js file
+import { mintNFT, switchToSepoliaNetwork, isSepoliaNetwork, SEPOLIA_CHAIN_ID } from '../utils/sepoliaContract';
 
 // Sample NFT metadata options
 const SAMPLE_NFTS = [
@@ -38,13 +38,16 @@ function MintNft() {
   const [correctNetwork, setCorrectNetwork] = useState(true);
   const [loading, setLoading] = useState(false);
   
-  // Helper function to switch networks
-  const switchToNetwork = async (chainId) => {
+  // Helper function to switch networks using our sepoliaContract.js file
+  const handleSwitchToSepolia = async () => {
     try {
       setLoading(true);
-      await changeNetwork(chainId);
+      await switchToSepoliaNetwork();
       setNetworkError(null);
-      window.location.reload();
+      // Wait a moment for the network to update
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       setNetworkError("Failed to switch network. Please try manually.");
       console.error("Network switch error:", error);
@@ -53,18 +56,13 @@ function MintNft() {
     }
   };
   
-  // Specific network switch functions
-  const switchToLocalhostNetwork = () => switchToNetwork(31337);
-  const switchToSepoliaNetwork = () => switchToNetwork(11155111);
-  
-  // Auto-switch to Sepolia on initial load if not already on it
+  // Auto-check for Sepolia network on initial load
   useEffect(() => {
     const checkForSepoliaNetwork = async () => {
       if (typeof window.ethereum !== 'undefined' && isConnected) {
         try {
-          const network = await window.ethereum.request({ method: 'eth_chainId' });
-          // If not on Sepolia (0xaa36a7), suggest switching to it
-          if (network !== '0xaa36a7') {
+          const isSepolia = await isSepoliaNetwork();
+          if (!isSepolia) {
             console.log("Not on Sepolia network, suggesting switch");
             setNetworkError("Please switch to the Sepolia network to use this application");
           } else {
@@ -236,7 +234,7 @@ function MintNft() {
           <Button 
             variant="primary" 
             disabled={loading}
-            onClick={() => switchToNetwork(11155111)} // Sepolia network ID
+            onClick={handleSwitchToSepolia}
           >
             {loading ? (
               <>
