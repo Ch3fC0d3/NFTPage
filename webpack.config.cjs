@@ -7,7 +7,14 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.[contenthash].js',
-    publicPath: '/'
+    publicPath: '/',
+    // Disable code splitting to avoid dynamic import issues
+    chunkFilename: '[name].[contenthash].js'
+  },
+  // Prevent code splitting
+  optimization: {
+    runtimeChunk: 'single',
+    splitChunks: false
   },
   module: {
     rules: [
@@ -28,6 +35,14 @@ module.exports = {
       {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,
         type: 'asset/resource',
+      },
+      {
+        // Handle JSON files directly
+        test: /\.json$/,
+        type: 'json',
+        parser: {
+          parse: JSON.parse
+        }
       }
     ]
   },
