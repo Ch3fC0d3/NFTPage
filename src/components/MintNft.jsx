@@ -100,25 +100,12 @@ function MintNft() {
               AMOY: '0x13882'                // 80002
             };
             
-            // Check if we're on a supported network
-            const isLocalhost = NETWORKS.LOCALHOST.includes(network);
-            const isGoerli = network === NETWORKS.GOERLI;
-            const isSepolia = network === NETWORKS.SEPOLIA;
-            const isAmoy = network === NETWORKS.AMOY;
-            
-            // Prioritize Sepolia network
             if (isSepolia) {
-              // We're on Sepolia, which is our preferred network
               setCorrectNetwork(true);
               setNetworkError(null);
-            } else if (isLocalhost || isGoerli || isAmoy) {
-              // We're on another supported network, but Sepolia is preferred
-              setCorrectNetwork(true);
-              setNetworkError("You're on a supported network, but Sepolia is required for this application.");
             } else {
-              // We're on an unsupported network
               setCorrectNetwork(false);
-              setNetworkError("Please connect to Sepolia network to use this application");
+              setNetworkError("Please connect to Sepolia network to use this app");
             }
             
             // If we're not on Sepolia, suggest switching to it

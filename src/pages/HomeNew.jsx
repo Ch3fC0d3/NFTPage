@@ -70,14 +70,13 @@ function HomeNew() {
 
           // Setup event listeners
           window.ethereum.on('accountsChanged', (accounts) => {
-            if (accounts.length === 0) {
-              // User disconnected
-              setIsConnected(false);
-              setAddress('');
-              setSigner(null);
+            const isSepolia = chainId === SEPOLIA_CHAIN_ID;
+            if (isSepolia) {
+              setCorrectNetwork(true);
+              setNetworkError(null);
             } else {
-              // Account changed
-              connectWallet(false);
+              setCorrectNetwork(false);
+              setNetworkError("Please connect to Sepolia network to use this app");
             }
           });
 
@@ -139,6 +138,7 @@ function HomeNew() {
         setNetworkError("Please switch to Sepolia network to use this application");
       } else {
         setNetworkError(null);
+        setCorrectNetwork(true);
         // Initialize contract
         initializeContract(ethersSigner);
       }
@@ -238,7 +238,7 @@ function HomeNew() {
 
   // Mint NFT function
   const handleMint = async () => {
-    if (!signer || !contract || !isConnected) return;
+    if (!signer || !contract || !isConnected || !correctNetwork) return;
     
     setIsMinting(true);
     
@@ -309,7 +309,7 @@ function HomeNew() {
       {networkError && (
         <Row className="mb-4">
           <Col>
-            <Alert variant="warning" className="d-flex align-items-center">
+            <Alert variant="danger" className="d-flex align-items-center">
               <div className="me-3">⚠️</div>
               <div>
                 <strong>{networkError}</strong>
