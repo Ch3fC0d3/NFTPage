@@ -219,26 +219,63 @@ function MintNft() {
       <div>
         <Alert variant="danger" className="d-flex align-items-center">
           <AlertTriangle size={20} className="me-2" />
-          Contract not found on this network. Please make sure your local blockchain is running or switch to Goerli testnet.
-        </Alert>
-        <Button 
-          variant="primary" 
-          className="w-100 mt-3"
-          disabled={loading}
-          onClick={switchToLocalhostNetwork}
-        >
-          {loading ? (
+          {contractError ? (
             <>
-              <Spinner size="sm" animation="border" className="me-2" />
-              Switching...
+              <strong>Contract Error:</strong> {contractError}
+              <div className="small mt-2">
+                This may be due to network issues or the contract not being deployed on this network.
+              </div>
             </>
           ) : (
-            <>
-              <RefreshCw size={18} className="me-2" />
-              Switch to Localhost Network
-            </>
+            <>Contract not found on this network. Please make sure your local blockchain is running or switch to a supported testnet.</>
           )}
-        </Button>
+        </Alert>
+        
+        <div className="d-grid gap-2 mt-3">
+          <Button 
+            variant="primary" 
+            disabled={loading}
+            onClick={() => switchToNetwork(11155111)} // Sepolia
+          >
+            {loading ? (
+              <>
+                <Spinner size="sm" animation="border" className="me-2" />
+                Switching...
+              </>
+            ) : (
+              <>
+                <RefreshCw size={18} className="me-2" />
+                Switch to Sepolia Network
+              </>
+            )}
+          </Button>
+          
+          <Button 
+            variant="outline-secondary" 
+            className="mt-2"
+            disabled={loading}
+            onClick={switchToAmoyNetwork}
+          >
+            Switch to Polygon Amoy Network
+          </Button>
+          
+          <Button 
+            variant="outline-secondary" 
+            className="mt-2"
+            disabled={loading}
+            onClick={switchToLocalhostNetwork}
+          >
+            Switch to Localhost Network
+          </Button>
+          
+          <Button 
+            variant="outline-info" 
+            className="mt-3"
+            onClick={() => window.location.reload()}
+          >
+            Refresh Page
+          </Button>
+        </div>
       </div>
     );
   }
