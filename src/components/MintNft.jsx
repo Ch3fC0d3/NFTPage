@@ -5,8 +5,8 @@ import toast from 'react-hot-toast';
 import useWallet from '../hooks/useWallet';
 // Import the direct contract hook
 import useDirectContract from '../hooks/useDirectContract';
-// Import directly from our sepoliaContract.js file
-import { mintNFT, switchToSepoliaNetwork, isSepoliaNetwork, SEPOLIA_CHAIN_ID } from '../utils/sepoliaContract';
+// Import directly from our consolidated contractUtils.js file
+import { mintNFT, switchToSepoliaNetwork, isSepoliaNetwork, SEPOLIA_CHAIN_ID } from '../utils/contractUtils';
 
 // Sample NFT metadata options
 const SAMPLE_NFTS = [
