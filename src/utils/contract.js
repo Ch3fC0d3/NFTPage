@@ -16,6 +16,7 @@ export const getNetworkConfig = async () => {
         if (network.chainId === 1) networkName = 'mainnet';
         else if (network.chainId === 5) networkName = 'goerli';
         else if (network.chainId === 11155111) networkName = 'sepolia';
+        else if (network.chainId === 80002) networkName = 'amoy';  // Polygon Amoy testnet
         else if (network.chainId === 1337 || network.chainId === 31337) networkName = 'localhost';
         else networkName = network.name !== 'unknown' ? network.name : 'localhost';
         
@@ -29,6 +30,8 @@ export const getNetworkConfig = async () => {
             deploymentInfo = await import('../deployments/goerli.json');
           } else if (networkName === 'sepolia') {
             deploymentInfo = await import('../deployments/sepolia.json');
+          } else if (networkName === 'amoy') {
+            deploymentInfo = await import('../deployments/amoy.json');
           } else {
             throw new Error(`No deployment for network: ${networkName}`);
           }

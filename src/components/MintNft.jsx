@@ -36,11 +36,10 @@ function MintNft() {
   const [loading, setLoading] = useState(false);
   
   // Helper function to switch networks
-  const switchToLocalhostNetwork = async () => {
+  const switchToNetwork = async (chainId) => {
     try {
       setLoading(true);
-      // This is localhost chainId
-      await changeNetwork(31337);
+      await changeNetwork(chainId);
       setNetworkError(null);
       window.location.reload();
     } catch (error) {
@@ -50,6 +49,10 @@ function MintNft() {
       setLoading(false);
     }
   };
+  
+  // Specific network switch functions
+  const switchToLocalhostNetwork = () => switchToNetwork(31337);
+  const switchToAmoyNetwork = () => switchToNetwork(80002);
   
   // Check if MetaMask is connected on component mount and when isConnected changes
   useEffect(() => {
@@ -67,10 +70,11 @@ function MintNft() {
             // Localhost is usually 31337 (0x7a69) or 1337 (0x539)
             const isLocalhost = network === '0x7a69' || network === '0x539';
             const isGoerli = network === '0x5';
-            setCorrectNetwork(isLocalhost || isGoerli);
+            const isAmoy = network === '0x13882'; // Polygon Amoy chainId
+            setCorrectNetwork(isLocalhost || isGoerli || isAmoy);
             
-            if (!isLocalhost && !isGoerli) {
-              setNetworkError("Please connect to Localhost or Goerli network to use this app");
+            if (!isLocalhost && !isGoerli && !isAmoy) {
+              setNetworkError("Please connect to Localhost, Goerli, or Polygon Amoy network to use this app");
             } else {
               setNetworkError(null);
             }
@@ -178,24 +182,33 @@ function MintNft() {
           <AlertTriangle size={20} className="me-2" />
           {networkError}
         </Alert>
-        <Button 
-          variant="primary" 
-          className="w-100 mt-3"
-          disabled={loading}
-          onClick={switchToLocalhostNetwork}
-        >
-          {loading ? (
-            <>
-              <Spinner size="sm" animation="border" className="me-2" />
-              Switching...
-            </>
-          ) : (
-            <>
-              <RefreshCw size={18} className="me-2" />
-              Switch to Localhost Network
-            </>
-          )}
-        </Button>
+        <div className="d-grid gap-2 mt-3">
+          <Button 
+            variant="primary" 
+            disabled={loading}
+            onClick={switchToAmoyNetwork}
+          >
+            {loading ? (
+              <>
+                <Spinner size="sm" animation="border" className="me-2" />
+                Switching...
+              </>
+            ) : (
+              <>
+                <RefreshCw size={18} className="me-2" />
+                Switch to Polygon Amoy Network
+              </>
+            )}
+          </Button>
+          <Button 
+            variant="outline-secondary" 
+            className="mt-2"
+            disabled={loading}
+            onClick={switchToLocalhostNetwork}
+          >
+            Switch to Localhost Network
+          </Button>
+        </div>
       </div>
     );
   }

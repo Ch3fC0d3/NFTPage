@@ -6,7 +6,7 @@ services:
     deploy_on_push: true
     repo: Ch3fC0d3/NFTManager
   build_command: npm install && npm install tailwindcss && npm run build
-  run_command: npm start
+  run_command: node server.cjs
   environment_slug: node-js
   envs:
   - key: NODE_ENV
