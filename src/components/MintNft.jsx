@@ -3,10 +3,10 @@ import { PlusCircle, Sparkles, Check, AlertTriangle, RefreshCw } from 'lucide-re
 import { Button, Card, Row, Col, Form, Alert, Spinner, Badge } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import useWallet from '../hooks/useWallet';
-// Import the direct contract hook instead of the original one
+// Import the direct contract hook
 import useDirectContract from '../hooks/useDirectContract';
-// Import the direct mint function
-import { directMintNFT } from '../utils/directContract';
+// Import the new mint function from our mintUtils
+import { mintNFT } from '../utils/mintUtils';
 
 // Sample NFT metadata options
 const SAMPLE_NFTS = [
@@ -143,49 +143,31 @@ function MintNft() {
   const [transaction, setTransaction] = useState(null);
 
   const handleMint = async () => {
-    if (!contract || !isConnected) return;
+    if (!signer || !isConnected) return;
     
     setIsMinting(true);
     
     try {
-      // In a real app, you would upload metadata to IPFS
-      // For demo purposes, we're using a fake IPFS URI
-      const tokenURI = `ipfs://QmSampleHash${selectedNft}`;
+      // Get the selected NFT metadata
+      const selectedMetadata = SAMPLE_NFTS[selectedNft];
       
-      console.log('Attempting to mint NFT with URI:', tokenURI);
-      console.log('Contract instance:', contract);
+      console.log('Attempting to mint NFT with metadata:', selectedMetadata);
       
-      // Call direct mint function with proper error handling
-      const tx = await directMintNFT(contract, tokenURI);
-      console.log('Transaction initiated:', tx);
+      // Call our new mintNFT function from mintUtils.js
+      const result = await mintNFT(signer, selectedMetadata);
+      console.log('Mint result:', result);
       
-      setTransaction(tx.hash);
+      setTransaction(result.transactionHash);
       
       // Show toast notification
-      toast.loading("Minting your NFT...", { id: tx.hash });
+      toast.success("NFT minted successfully!", { 
+        id: result.transactionHash,
+        duration: 5000
+      });
       
-      // Wait for transaction to be mined
-      const receipt = await tx.wait();
-      console.log('Transaction receipt:', receipt);
+      // Refresh contract data
+      refreshContractData();
       
-      // Update toast notification
-      toast.success("NFT minted successfully!", { id: tx.hash });
-      
-      try {
-        // Try to get the contract
-        contract = await getDirectContract(signer);
-        console.log('Contract initialized successfully');
-      } catch (error) {
-        console.error('Failed to initialize contract:', error);
-        
-        // Check if this is a network-specific error
-        if (error.message.includes('chain ID')) {
-          setError(`Error: ${error.message}. Please switch to Sepolia (11155111) network.`);
-        } else {
-          setError('Failed to initialize contract. Please make sure you are on the correct network.');
-        }
-        return null;
-      }
     } catch (error) {
       console.error("Mint error:", error);
       
@@ -194,8 +176,11 @@ function MintNft() {
         toast.error("Transaction rejected by user");
       } else if (error.message && error.message.includes('insufficient funds')) {
         toast.error("Insufficient funds to complete transaction");
-      } else if (error.message && error.message.includes('user rejected transaction')) {
+      } else if (error.message && error.message.includes('user rejected')) {
         toast.error("Transaction rejected by user");
+      } else if (error.message && error.message.includes('chain ID')) {
+        toast.error("Please switch to Sepolia network");
+        setNetworkError("This application requires the Sepolia network (Chain ID: 11155111)");
       } else {
         toast.error(`Failed to mint NFT: ${error.message || 'Unknown error'}`);
       }

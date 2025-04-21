@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
+// Import from our new contractData.js file instead
 import { 
-  getDirectContract, 
-  getDirectMintPrice, 
-  getDirectCurrentSupply, 
-  getDirectMaxSupply 
-} from "../utils/directContract.js";
+  getContract, 
+  getMintPrice, 
+  getCurrentSupply, 
+  getMaxSupply 
+} from "../utils/contractData.js";
 
 const useDirectContract = (signer, provider) => {
   const [state, setState] = useState({
@@ -20,27 +21,27 @@ const useDirectContract = (signer, provider) => {
   const initContract = useCallback(async () => {
     if (!signer && !provider) return;
     
-    setIsLoading(true);
-    setError(null);
-
     try {
-      // Initialize with signer if available, otherwise use provider
-      const contract = await getDirectContract(signer || provider);
+      setIsLoading(true);
+      setError(null);
+      
+      // Get contract instance using our new contractData.js file
+      const contractInstance = await getContract(signer || provider);
       
       // Get contract data
-      const mintPrice = await getDirectMintPrice(contract);
-      const currentSupply = await getDirectCurrentSupply(contract);
-      const maxSupply = await getDirectMaxSupply(contract);
+      const price = await getMintPrice(contractInstance);
+      const supply = await getCurrentSupply(contractInstance);
+      const max = await getMaxSupply(contractInstance);
       
       setState({
-        contract,
-        mintPrice,
-        currentSupply,
-        maxSupply
+        contract: contractInstance,
+        mintPrice: price,
+        currentSupply: supply,
+        maxSupply: max
       });
-    } catch (err) {
-      console.error("Failed to initialize direct contract:", err);
-      setError(err.message || "Failed to initialize contract");
+    } catch (error) {
+      console.error("Failed to initialize contract:", error);
+      setError(error.message);
     } finally {
       setIsLoading(false);
     }
