@@ -57,6 +57,26 @@ function MintNft() {
   const switchToLocalhostNetwork = () => switchToNetwork(31337);
   const switchToAmoyNetwork = () => switchToNetwork(80002);
   
+  // Auto-switch to Amoy on initial load if on Sepolia
+  useEffect(() => {
+    const autoSwitchToAmoy = async () => {
+      if (typeof window.ethereum !== 'undefined' && isConnected) {
+        try {
+          const network = await window.ethereum.request({ method: 'eth_chainId' });
+          // If on Sepolia (0xaa36a7), suggest switching to Amoy
+          if (network === '0xaa36a7') {
+            console.log("Detected Sepolia network, suggesting Amoy");
+            setNetworkError("For the best experience, please switch to the Polygon Amoy network");
+          }
+        } catch (error) {
+          console.error("Error checking network for auto-switch:", error);
+        }
+      }
+    };
+    
+    autoSwitchToAmoy();
+  }, [isConnected]);
+  
   // Check if MetaMask is connected on component mount and when isConnected changes
   useEffect(() => {
     const checkWalletConnection = async () => {
@@ -70,16 +90,39 @@ function MintNft() {
           if (accounts && accounts.length > 0) {
             const network = await window.ethereum.request({ method: 'eth_chainId' });
             console.log("Current chain ID:", network);
-            // Localhost is usually 31337 (0x7a69) or 1337 (0x539)
-            const isLocalhost = network === '0x7a69' || network === '0x539';
-            const isGoerli = network === '0x5';
-            const isAmoy = network === '0x13882'; // Polygon Amoy chainId
-            setCorrectNetwork(isLocalhost || isGoerli || isAmoy);
             
-            if (!isLocalhost && !isGoerli && !isAmoy) {
-              setNetworkError("Please connect to Localhost, Goerli, or Polygon Amoy network to use this app");
-            } else {
+            // Define network IDs (in hex format as returned by MetaMask)
+            const NETWORKS = {
+              LOCALHOST: ['0x7a69', '0x539'], // 31337 or 1337
+              GOERLI: '0x5',                 // 5
+              SEPOLIA: '0xaa36a7',           // 11155111
+              AMOY: '0x13882'                // 80002
+            };
+            
+            // Check if we're on a supported network
+            const isLocalhost = NETWORKS.LOCALHOST.includes(network);
+            const isGoerli = network === NETWORKS.GOERLI;
+            const isSepolia = network === NETWORKS.SEPOLIA;
+            const isAmoy = network === NETWORKS.AMOY;
+            
+            // Prioritize Amoy network
+            if (isAmoy) {
+              // We're on Amoy, which is our preferred network
+              setCorrectNetwork(true);
               setNetworkError(null);
+            } else if (isLocalhost || isGoerli || isSepolia) {
+              // We're on another supported network, but Amoy is preferred
+              setCorrectNetwork(true);
+              setNetworkError("You're on a supported network, but Polygon Amoy is recommended for this application.");
+            } else {
+              // We're on an unsupported network
+              setCorrectNetwork(false);
+              setNetworkError("Please connect to Polygon Amoy network for the best experience with this app");
+            }
+            
+            // If we're not on Amoy, suggest switching to it
+            if (!isAmoy) {
+              console.log("Not on Amoy network, suggesting switch");
             }
           }
         } catch (error) {
@@ -177,11 +220,14 @@ function MintNft() {
     );
   }
   
-  // Wrong network error
+  // Network message or error
   if (networkError) {
+    // Determine if it's a warning or error
+    const isWarning = networkError.includes("supported network");
+    
     return (
       <div>
-        <Alert variant="danger" className="d-flex align-items-center">
+        <Alert variant={isWarning ? "warning" : "danger"} className="d-flex align-items-center">
           <AlertTriangle size={20} className="me-2" />
           {networkError}
         </Alert>
@@ -189,7 +235,7 @@ function MintNft() {
           <Button 
             variant="primary" 
             disabled={loading}
-            onClick={switchToAmoyNetwork}
+            onClick={() => switchToNetwork(80002)} // Amoy network ID
           >
             {loading ? (
               <>
@@ -203,6 +249,30 @@ function MintNft() {
               </>
             )}
           </Button>
+          
+          {/* Only show these options if we're showing a warning, not an error */}
+          {isWarning && (
+            <Button 
+              variant="outline-secondary" 
+              className="mt-2"
+              onClick={() => {
+                // Clear the network error and continue with current network
+                setNetworkError(null);
+              }}
+            >
+              Continue with Current Network
+            </Button>
+          )}
+          
+          <Button 
+            variant="outline-secondary" 
+            className="mt-2"
+            disabled={loading}
+            onClick={() => switchToNetwork(11155111)} // Sepolia
+          >
+            Switch to Sepolia Network
+          </Button>
+          
           <Button 
             variant="outline-secondary" 
             className="mt-2"

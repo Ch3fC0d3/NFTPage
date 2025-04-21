@@ -22,14 +22,14 @@ const CONTRACT_ABI = [
 
 // Hardcoded contract addresses for each network
 const CONTRACT_ADDRESSES = {
+  // Polygon Amoy testnet (PREFERRED NETWORK)
+  80002: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  
   // Sepolia testnet
   11155111: "0xd9145CCE52D386f254917e481eB44e9943F39138",
   
   // Goerli testnet
   5: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  
-  // Polygon Amoy testnet
-  80002: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
   
   // Localhost
   1337: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
@@ -73,7 +73,9 @@ export const getDirectContract = async (signerOrProvider) => {
     // Get contract address for this network
     const contractAddress = CONTRACT_ADDRESSES[chainId];
     if (!contractAddress) {
-      throw new Error(`No contract deployed on network with chain ID ${chainId}`);
+      console.warn(`No contract deployed on network with chain ID ${chainId}, using Amoy address as fallback`);
+      // Use Amoy address as fallback
+      return new ethers.Contract(CONTRACT_ADDRESSES[80002], CONTRACT_ABI, signerOrProvider);
     }
     
     console.log(`Using contract address: ${contractAddress}`);
