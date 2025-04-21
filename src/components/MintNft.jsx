@@ -286,7 +286,7 @@ function MintNft() {
               </div>
             </>
           ) : (
-            <>Contract not found on this network. Please make sure your local blockchain is running or switch to a supported testnet.</>
+            <>Contract not found on this network. Please switch to the Sepolia network (Chain ID: 11155111) to use this application.</>
           )}
         </Alert>
         
