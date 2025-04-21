@@ -3,7 +3,7 @@
 
 import { ethers } from "ethers";
 
-// Hardcoded contract ABI (minimal version with just the functions we need)
+// Simplified contract ABI with just the functions we need
 const CONTRACT_ABI = [
   // Read functions
   "function getMintPrice() view returns (uint256)",

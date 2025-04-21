@@ -23,22 +23,24 @@ const reactRouterFutureFlags = () => {
   };
 };
 
-// Custom plugin to handle deployment JSON files
-const deploymentFilesPlugin = () => {
+// Simplified build configuration to avoid dynamic import issues
+const simplifiedBuildPlugin = () => {
   return {
-    name: 'deployment-files',
-    // Simplify build process to avoid deployment file issues
+    name: 'simplified-build',
     config(config) {
       return {
         ...config,
         build: {
           ...config.build,
+          // Disable code splitting to avoid dynamic import issues
           rollupOptions: {
-            ...config?.build?.rollupOptions,
-            input: {
-              main: resolve(__dirname, 'index.html')
-            }
-          }
+            output: {
+              manualChunks: undefined,
+            },
+          },
+          // Ensure clear-cache.html is included in the build
+          outDir: 'dist',
+          emptyOutDir: true,
         }
       };
     }
@@ -50,24 +52,18 @@ export default defineConfig({
   plugins: [
     react(),
     reactRouterFutureFlags(),
-    deploymentFilesPlugin()
+    simplifiedBuildPlugin()
   ],
   optimizeDeps: {
-    exclude: ['lucide-react'],
-    // Include JSON files in optimization
-    include: ['src/deployments/*.json']
+    exclude: ['lucide-react']
   },
   build: {
     // Improve chunk handling
     chunkSizeWarningLimit: 1000,
+    // Disable code splitting to avoid dynamic import issues
     rollupOptions: {
-      // Properly handle JSON imports
       output: {
-        manualChunks(id) {
-          if (id.includes('deployments')) {
-            return 'deployments';
-          }
-        }
+        manualChunks: undefined
       }
     }
   },

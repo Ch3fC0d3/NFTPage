@@ -1,6 +1,21 @@
 import { ethers } from "ethers";
-// Import contract ABI
-import contractAbi from "../../artifacts/contracts/CryptoCanvas.sol/CryptoCanvas.json";
+
+// Simplified contract ABI with just the functions we need
+const CONTRACT_ABI = [
+  // Read functions
+  "function getMintPrice() view returns (uint256)",
+  "function getCurrentSupply() view returns (uint256)",
+  "function getMaxSupply() view returns (uint256)",
+  "function balanceOf(address owner) view returns (uint256)",
+  "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
+  "function tokenURI(uint256 tokenId) view returns (string)",
+  
+  // Write functions
+  "function publicMint(string memory tokenURI) payable",
+  
+  // Events
+  "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)"
+];
 
 // Hardcoded contract addresses for each network
 const CONTRACT_ADDRESSES = {
@@ -48,7 +63,7 @@ export const getNetworkConfig = async () => {
     
     return { 
       contractAddress,
-      contractAbi: contractAbi.abi,
+      contractAbi: CONTRACT_ABI,
       chainId: network.chainId,
       networkName
     };
