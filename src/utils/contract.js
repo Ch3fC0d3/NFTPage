@@ -33,7 +33,26 @@ const CONTRACT_ADDRESSES = {
   31337: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
 };
 
-// Get network configuration based on connected chain
+// Hardcoded deployment data to avoid dynamic imports
+const DEPLOYMENT_DATA = {
+  // Sepolia testnet
+  11155111: {
+    contractAddress: "0xd9145CCE52D386f254917e481eB44e9943F39138",
+    deploymentBlock: 4270321,
+    deploymentTimestamp: "2025-04-21T13:54:00.000Z",
+    networkName: "Sepolia"
+  },
+  
+  // Polygon Amoy testnet
+  80002: {
+    contractAddress: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    deploymentBlock: 1000000,
+    deploymentTimestamp: "2025-04-21T13:54:00.000Z",
+    networkName: "Polygon Amoy"
+  }
+};
+
+// Helper function to get network configuration
 export const getNetworkConfig = async () => {
   try {
     // Get network from the connected provider
@@ -49,30 +68,46 @@ export const getNetworkConfig = async () => {
       throw new Error(`This application is only supported on Sepolia (11155111) network. Please switch your wallet to Sepolia network to continue.`);
     }
     
-    // Determine network name based on chain ID
-    const networkNames = {
-      11155111: 'Sepolia',
-      80002: 'Polygon Amoy',
-      5: 'Goerli',
-      1337: 'Localhost',
-      31337: 'Hardhat'
+    // Get deployment data for this network
+    const deploymentInfo = DEPLOYMENT_DATA[network.chainId] || {
+      contractAddress,
+      deploymentBlock: 0,
+      deploymentTimestamp: new Date().toISOString(),
+      networkName: getNetworkName(network.chainId)
     };
     
-    const networkName = networkNames[network.chainId] || 'Unknown';
-    console.log(`Connected to ${networkName} network with chain ID ${network.chainId}`);
+    console.log(`Connected to ${deploymentInfo.networkName} network with chain ID ${network.chainId}`);
     
     return { 
-      contractAddress,
+      contractAddress: deploymentInfo.contractAddress,
       contractAbi: CONTRACT_ABI,
       chainId: network.chainId,
-      networkName
+      networkName: deploymentInfo.networkName,
+      deploymentBlock: deploymentInfo.deploymentBlock,
+      deploymentTimestamp: deploymentInfo.deploymentTimestamp
     };
   } catch (error) {
-    console.error("Failed to load contract deployment info:", error);
+    console.error("Failed to get network config:", error);
     throw error;
   }
 };
 
+// Helper function to get network name
+const getNetworkName = (chainId) => {
+  const networkNames = {
+    11155111: 'Sepolia',
+    80002: 'Amoy',
+    5: 'Goerli',
+    1: 'Mainnet',
+    137: 'Polygon',
+    1337: 'Localhost',
+    31337: 'Hardhat'
+  };
+  
+  return networkNames[chainId] || 'Unknown';
+};
+
+// Helper function to get contract
 export const getContract = async (signerOrProvider) => {
   const config = await getNetworkConfig();
   return new ethers.Contract(
@@ -82,40 +117,39 @@ export const getContract = async (signerOrProvider) => {
   );
 };
 
+// Helper function to get mint price
 export const getMintPrice = async (contract) => {
   const price = await contract.getMintPrice();
   return ethers.utils.formatEther(price);
 };
 
+// Helper function to get current supply
 export const getCurrentSupply = async (contract) => {
-  const supply = await contract.getCurrentSupply();
-  return supply.toNumber();
+  return (await contract.getCurrentSupply()).toString();
 };
 
+// Helper function to get max supply
 export const getMaxSupply = async (contract) => {
-  const maxSupply = await contract.getMaxSupply();
-  return maxSupply.toNumber();
+  return (await contract.getMaxSupply()).toString();
 };
 
-// Function to mint a new NFT
+// Function to mint an NFT
 export const mintNFT = async (contract, tokenURI) => {
   try {
-    // Get the mint price from the contract
-    const mintPrice = await contract.getMintPrice();
-    console.log('Mint price:', ethers.utils.formatEther(mintPrice), 'ETH');
+    // Get mint price
+    const mintPriceWei = await contract.getMintPrice();
+    console.log('Mint price:', ethers.utils.formatEther(mintPriceWei), 'ETH');
     
-    // The smart contract's publicMint function only takes the URI as a parameter
-    // and the value is sent as part of the transaction options
+    // Mint NFT with value equal to mint price
     const tx = await contract.publicMint(tokenURI, { 
-      value: mintPrice,
-      gasLimit: 250000 // Add a reasonable gas limit to avoid transaction failures
+      value: mintPriceWei,
+      gasLimit: 500000 // Explicit gas limit to avoid estimation issues
     });
-    
     console.log('Mint transaction sent:', tx.hash);
     return tx;
   } catch (error) {
-    console.error('Error in mintNFT function:', error);
-    throw error; // Re-throw to allow component-level error handling
+    console.error('Error minting NFT:', error);
+    throw error;
   }
 };
 

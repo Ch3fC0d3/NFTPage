@@ -55,26 +55,29 @@ function MintNft() {
   
   // Specific network switch functions
   const switchToLocalhostNetwork = () => switchToNetwork(31337);
-  const switchToAmoyNetwork = () => switchToNetwork(80002);
+  const switchToSepoliaNetwork = () => switchToNetwork(11155111);
   
-  // Auto-switch to Amoy on initial load if on Sepolia
+  // Auto-switch to Sepolia on initial load if not already on it
   useEffect(() => {
-    const autoSwitchToAmoy = async () => {
+    const checkForSepoliaNetwork = async () => {
       if (typeof window.ethereum !== 'undefined' && isConnected) {
         try {
           const network = await window.ethereum.request({ method: 'eth_chainId' });
-          // If on Sepolia (0xaa36a7), suggest switching to Amoy
-          if (network === '0xaa36a7') {
-            console.log("Detected Sepolia network, suggesting Amoy");
-            setNetworkError("For the best experience, please switch to the Polygon Amoy network");
+          // If not on Sepolia (0xaa36a7), suggest switching to it
+          if (network !== '0xaa36a7') {
+            console.log("Not on Sepolia network, suggesting switch");
+            setNetworkError("Please switch to the Sepolia network to use this application");
+          } else {
+            console.log("Detected Sepolia network, we're good to go!");
+            setNetworkError(null);
           }
         } catch (error) {
-          console.error("Error checking network for auto-switch:", error);
+          console.error("Error checking network:", error);
         }
       }
     };
     
-    autoSwitchToAmoy();
+    checkForSepoliaNetwork();
   }, [isConnected]);
   
   // Check if MetaMask is connected on component mount and when isConnected changes
@@ -105,24 +108,24 @@ function MintNft() {
             const isSepolia = network === NETWORKS.SEPOLIA;
             const isAmoy = network === NETWORKS.AMOY;
             
-            // Prioritize Amoy network
-            if (isAmoy) {
-              // We're on Amoy, which is our preferred network
+            // Prioritize Sepolia network
+            if (isSepolia) {
+              // We're on Sepolia, which is our preferred network
               setCorrectNetwork(true);
               setNetworkError(null);
-            } else if (isLocalhost || isGoerli || isSepolia) {
-              // We're on another supported network, but Amoy is preferred
+            } else if (isLocalhost || isGoerli || isAmoy) {
+              // We're on another supported network, but Sepolia is preferred
               setCorrectNetwork(true);
-              setNetworkError("You're on a supported network, but Polygon Amoy is recommended for this application.");
+              setNetworkError("You're on a supported network, but Sepolia is required for this application.");
             } else {
               // We're on an unsupported network
               setCorrectNetwork(false);
-              setNetworkError("Please connect to Polygon Amoy network for the best experience with this app");
+              setNetworkError("Please connect to Sepolia network to use this application");
             }
             
-            // If we're not on Amoy, suggest switching to it
-            if (!isAmoy) {
-              console.log("Not on Amoy network, suggesting switch");
+            // If we're not on Sepolia, suggest switching to it
+            if (!isSepolia) {
+              console.log("Not on Sepolia network, suggesting switch");
             }
           }
         } catch (error) {
@@ -233,7 +236,7 @@ function MintNft() {
           <Button 
             variant="primary" 
             disabled={loading}
-            onClick={() => switchToNetwork(80002)} // Amoy network ID
+            onClick={() => switchToNetwork(11155111)} // Sepolia network ID
           >
             {loading ? (
               <>
@@ -243,7 +246,7 @@ function MintNft() {
             ) : (
               <>
                 <RefreshCw size={18} className="me-2" />
-                Switch to Polygon Amoy Network
+                Switch to Sepolia Network
               </>
             )}
           </Button>
