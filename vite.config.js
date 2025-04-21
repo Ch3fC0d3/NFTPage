@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 
 // Custom plugin to inject React Router future flags
 const reactRouterFutureFlags = () => {
@@ -22,14 +23,58 @@ const reactRouterFutureFlags = () => {
   };
 };
 
+// Custom plugin to handle deployment JSON files
+const deploymentFilesPlugin = () => {
+  return {
+    name: 'deployment-files',
+    // Pre-bundle deployment JSON files to avoid dynamic import issues
+    config(config) {
+      return {
+        ...config,
+        build: {
+          ...config.build,
+          rollupOptions: {
+            ...config?.build?.rollupOptions,
+            input: {
+              main: resolve(__dirname, 'index.html'),
+              // Include deployment files as entry points
+              sepolia: resolve(__dirname, 'src/deployments/sepolia.json'),
+              goerli: resolve(__dirname, 'src/deployments/goerli.json'),
+              amoy: resolve(__dirname, 'src/deployments/amoy.json'),
+              localhost: resolve(__dirname, 'src/deployments/localhost.json'),
+            }
+          }
+        }
+      };
+    }
+  };
+};
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    reactRouterFutureFlags()
+    reactRouterFutureFlags(),
+    deploymentFilesPlugin()
   ],
   optimizeDeps: {
     exclude: ['lucide-react'],
+    // Include JSON files in optimization
+    include: ['src/deployments/*.json']
+  },
+  build: {
+    // Improve chunk handling
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      // Properly handle JSON imports
+      output: {
+        manualChunks(id) {
+          if (id.includes('deployments')) {
+            return 'deployments';
+          }
+        }
+      }
+    }
   },
   define: {
     // Define global variables to set React Router future flags
@@ -37,5 +82,7 @@ export default defineConfig({
       v7_startTransition: true,
       v7_relativeSplatPath: true
     })
-  }
+  },
+  // Ensure JSON files are properly handled
+  assetsInclude: ['**/*.json']
 });
