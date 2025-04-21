@@ -22,11 +22,11 @@ const CONTRACT_ABI = [
 
 // Hardcoded contract addresses for each network
 const CONTRACT_ADDRESSES = {
-  // Polygon Amoy testnet (PREFERRED NETWORK)
-  80002: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  
-  // Sepolia testnet
+  // Sepolia testnet (PREFERRED NETWORK)
   11155111: "0xd9145CCE52D386f254917e481eB44e9943F39138",
+  
+  // Polygon Amoy testnet
+  80002: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
   
   // Goerli testnet
   5: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
@@ -73,15 +73,23 @@ export const getDirectContract = async (signerOrProvider) => {
     // Get contract address for this network
     const contractAddress = CONTRACT_ADDRESSES[chainId];
     if (!contractAddress) {
-      console.warn(`No contract deployed on network with chain ID ${chainId}, using Amoy address as fallback`);
-      // Use Amoy address as fallback
-      return new ethers.Contract(CONTRACT_ADDRESSES[80002], CONTRACT_ABI, signerOrProvider);
+      console.warn(`No contract deployed on network with chain ID ${chainId}`);
+      throw new Error(`This application is only supported on Sepolia (11155111) network. Please switch your wallet to Sepolia network to continue.`);
     }
     
     console.log(`Using contract address: ${contractAddress}`);
     
-    // Create and return contract instance
-    return new ethers.Contract(contractAddress, CONTRACT_ABI, signerOrProvider);
+    // Create contract instance
+    const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, signerOrProvider);
+    
+    // Verify contract exists by checking a simple read function
+    try {
+      await contract.provider.getCode(contractAddress);
+      return contract;
+    } catch (error) {
+      console.error(`Failed to verify contract at address ${contractAddress}:`, error);
+      throw new Error(`The contract at address ${contractAddress} is not available on this network. Please switch to Sepolia (11155111) network to continue.`);
+    }
   } catch (error) {
     console.error("Error creating contract instance:", error);
     throw error;

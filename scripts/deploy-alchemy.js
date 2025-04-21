@@ -22,22 +22,28 @@ const contractBytecode = require('../artifacts/contracts/CryptoCanvas.sol/Crypto
 async function main() {
   console.log("Deploying CryptoCanvas to Sepolia...");
   
-  // Setup Alchemy provider
+  // Setup Alchemy provider for Sepolia
   const settings = {
-    apiKey: process.env.ALCHEMY_API_KEY || "99QNzS2y8XCVUFzePPzgl5W5mwm-FnyW",
+    apiKey: "99QNzS2y8XCVUFzePPzgl5W5mwm-FnyW", // Sepolia API key
     network: Network.ETH_SEPOLIA,
   };
   
   const alchemy = new Alchemy(settings);
   const provider = await alchemy.config.getProvider();
   
-  // Setup wallet
-  const privateKey = process.env.PRIVATE_KEY;
-  if (!privateKey) {
-    throw new Error("Missing PRIVATE_KEY in environment variables");
-  }
+  // Setup wallet with private key from environment
+  const wallet = new ethers.Wallet(
+    "2d5a4ac1460b6a3e596269170c7410b2fc642fbcb3aaec2b8edfe31e37dcae33",
+    provider
+  );
   
-  const wallet = new ethers.Wallet(privateKey, provider);
+  // Log wallet address for verification
+  console.log(`Deploying with account: ${wallet.address}`);
+  
+  // Check wallet balance
+  const balance = await provider.getBalance(wallet.address);
+  console.log(`Wallet balance: ${ethers.utils.formatEther(balance)} MATIC`);
+  
   console.log(`Deploying with account: ${wallet.address}`);
   
   // Create contract factory

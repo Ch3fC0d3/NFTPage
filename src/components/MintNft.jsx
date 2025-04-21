@@ -171,8 +171,21 @@ function MintNft() {
       // Update toast notification
       toast.success("NFT minted successfully!", { id: tx.hash });
       
-      // Refresh contract data
-      refreshContractData();
+      try {
+        // Try to get the contract
+        contract = await getDirectContract(signer);
+        console.log('Contract initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize contract:', error);
+        
+        // Check if this is a network-specific error
+        if (error.message.includes('chain ID')) {
+          setError(`Error: ${error.message}. Please switch to Sepolia (11155111) network.`);
+        } else {
+          setError('Failed to initialize contract. Please make sure you are on the correct network.');
+        }
+        return null;
+      }
     } catch (error) {
       console.error("Mint error:", error);
       

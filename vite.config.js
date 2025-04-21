@@ -27,7 +27,7 @@ const reactRouterFutureFlags = () => {
 const deploymentFilesPlugin = () => {
   return {
     name: 'deployment-files',
-    // Pre-bundle deployment JSON files to avoid dynamic import issues
+    // Simplify build process to avoid deployment file issues
     config(config) {
       return {
         ...config,
@@ -36,12 +36,7 @@ const deploymentFilesPlugin = () => {
           rollupOptions: {
             ...config?.build?.rollupOptions,
             input: {
-              main: resolve(__dirname, 'index.html'),
-              // Include deployment files as entry points
-              sepolia: resolve(__dirname, 'src/deployments/sepolia.json'),
-              goerli: resolve(__dirname, 'src/deployments/goerli.json'),
-              amoy: resolve(__dirname, 'src/deployments/amoy.json'),
-              localhost: resolve(__dirname, 'src/deployments/localhost.json'),
+              main: resolve(__dirname, 'index.html')
             }
           }
         }

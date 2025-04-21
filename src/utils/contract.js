@@ -1,8 +1,22 @@
 import { ethers } from "ethers";
 // Import contract ABI
 import contractAbi from "../../artifacts/contracts/CryptoCanvas.sol/CryptoCanvas.json";
-// Import consolidated deployment data
-import deploymentData from '../deployments/index.js';
+
+// Hardcoded contract addresses for each network
+const CONTRACT_ADDRESSES = {
+  // Sepolia testnet (PREFERRED NETWORK)
+  11155111: "0xd9145CCE52D386f254917e481eB44e9943F39138",
+  
+  // Polygon Amoy testnet
+  80002: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  
+  // Goerli testnet
+  5: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  
+  // Localhost
+  1337: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  31337: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+};
 
 // Get network configuration based on connected chain
 export const getNetworkConfig = async () => {
@@ -12,21 +26,31 @@ export const getNetworkConfig = async () => {
     const network = await provider.getNetwork();
     console.log(`Current chain ID: 0x${network.chainId.toString(16)}`);
     
-    // Get deployment info for the current chain ID
-    const deploymentInfo = deploymentData[network.chainId];
+    // Get contract address for this network
+    const contractAddress = CONTRACT_ADDRESSES[network.chainId];
     
-    if (!deploymentInfo || !deploymentInfo.contractAddress) {
+    if (!contractAddress) {
       console.error(`No deployment found for chain ID ${network.chainId}`);
-      throw new Error(`Contract not deployed to network with chain ID ${network.chainId}`);
+      throw new Error(`This application is only supported on Sepolia (11155111) network. Please switch your wallet to Sepolia network to continue.`);
     }
     
-    console.log(`Connected to ${deploymentInfo.networkName} network with chain ID ${network.chainId}`);
+    // Determine network name based on chain ID
+    const networkNames = {
+      11155111: 'Sepolia',
+      80002: 'Polygon Amoy',
+      5: 'Goerli',
+      1337: 'Localhost',
+      31337: 'Hardhat'
+    };
+    
+    const networkName = networkNames[network.chainId] || 'Unknown';
+    console.log(`Connected to ${networkName} network with chain ID ${network.chainId}`);
     
     return { 
-      contractAddress: deploymentInfo.contractAddress,
+      contractAddress,
       contractAbi: contractAbi.abi,
       chainId: network.chainId,
-      networkName: deploymentInfo.networkName
+      networkName
     };
   } catch (error) {
     console.error("Failed to load contract deployment info:", error);
