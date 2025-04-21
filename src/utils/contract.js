@@ -1,52 +1,49 @@
 import { ethers } from "ethers";
-// Updated import path to correctly resolve the contract ABI
+// Import contract ABI
 import contractAbi from "../../artifacts/contracts/CryptoCanvas.sol/CryptoCanvas.json";
+// Import all deployment files statically to avoid dynamic import issues in production
+import localhostDeployment from '../deployments/localhost.json';
+import goerliDeployment from '../deployments/goerli.json';
+import sepoliaDeployment from '../deployments/sepolia.json';
+import amoyDeployment from '../deployments/amoy.json';
+// Optional: import other network deployments if available
+// import mumbaiDeployment from '../deployments/mumbai.json';
+// import mainnetDeployment from '../deployments/mainnet.json';
 
-// Import ABI and contract addresses
+// Create a mapping of chain IDs to deployment info
+const deploymentsByChainId = {
+  1: { deployment: null, name: 'mainnet' }, // Ethereum Mainnet
+  5: { deployment: goerliDeployment, name: 'goerli' }, // Goerli Testnet
+  11155111: { deployment: sepoliaDeployment, name: 'sepolia' }, // Sepolia Testnet
+  80002: { deployment: amoyDeployment, name: 'amoy' }, // Polygon Amoy Testnet
+  1337: { deployment: localhostDeployment, name: 'localhost' }, // Local development
+  31337: { deployment: localhostDeployment, name: 'localhost' }, // Hardhat network
+  // Add other networks as needed
+  // 80001: { deployment: mumbaiDeployment, name: 'mumbai' }, // Polygon Mumbai Testnet
+};
+
+// Get network configuration based on connected chain
 export const getNetworkConfig = async () => {
   // Get network from the connected provider
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   return provider.getNetwork()
-    .then(async network => {
+    .then(network => {
       try {
-        // Map chainId to network name
-        let networkName = 'localhost';
+        // Get deployment info for the current chain ID
+        const deploymentInfo = deploymentsByChainId[network.chainId];
         
-        // Map chain IDs to network names
-        if (network.chainId === 1) networkName = 'mainnet';
-        else if (network.chainId === 5) networkName = 'goerli';
-        else if (network.chainId === 11155111) networkName = 'sepolia';
-        else if (network.chainId === 80002) networkName = 'amoy';  // Polygon Amoy testnet
-        else if (network.chainId === 1337 || network.chainId === 31337) networkName = 'localhost';
-        else networkName = network.name !== 'unknown' ? network.name : 'localhost';
-        
-        // Import deployment info using a more reliable approach for production builds
-        let deploymentInfo;
-        try {
-          // Preload specific network deployments to avoid dynamic import issues
-          if (networkName === 'localhost') {
-            deploymentInfo = await import('../deployments/localhost.json');
-          } else if (networkName === 'goerli') {
-            deploymentInfo = await import('../deployments/goerli.json');
-          } else if (networkName === 'sepolia') {
-            deploymentInfo = await import('../deployments/sepolia.json');
-          } else if (networkName === 'amoy') {
-            deploymentInfo = await import('../deployments/amoy.json');
-          } else {
-            throw new Error(`No deployment for network: ${networkName}`);
-          }
-        } catch (importError) {
-          console.error(`Error importing deployment for ${networkName}:`, importError);
-          throw new Error(`Failed to load deployment for ${networkName}`);
+        if (!deploymentInfo || !deploymentInfo.deployment) {
+          console.error(`No deployment found for chain ID ${network.chainId}`);
+          throw new Error(`Contract not deployed to network with chain ID ${network.chainId}`);
         }
         
-        console.log(`Connected to ${networkName} network with chain ID ${network.chainId}`);
+        console.log(`Connected to ${deploymentInfo.name} network with chain ID ${network.chainId}`);
         
         return { 
-          contractAddress: deploymentInfo.default.contractAddress,
+          contractAddress: deploymentInfo.deployment.contractAddress,
           contractAbi: contractAbi.abi,
           chainId: network.chainId,
-          networkName
+          networkName: deploymentInfo.name
         };
       } catch (error) {
         console.error("Failed to load contract deployment info:", error);
