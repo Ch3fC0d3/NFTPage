@@ -1,0 +1,158 @@
+// Direct contract initialization without any dynamic imports
+// This file contains hardcoded contract information to avoid any build issues
+
+import { ethers } from "ethers";
+
+// Hardcoded contract ABI (minimal version with just the functions we need)
+const CONTRACT_ABI = [
+  // Read functions
+  "function getMintPrice() view returns (uint256)",
+  "function getCurrentSupply() view returns (uint256)",
+  "function getMaxSupply() view returns (uint256)",
+  "function balanceOf(address owner) view returns (uint256)",
+  "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
+  "function tokenURI(uint256 tokenId) view returns (string)",
+  
+  // Write functions
+  "function publicMint(string memory tokenURI) payable",
+  
+  // Events
+  "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)"
+];
+
+// Hardcoded contract addresses for each network
+const CONTRACT_ADDRESSES = {
+  // Sepolia testnet
+  11155111: "0xd9145CCE52D386f254917e481eB44e9943F39138",
+  
+  // Goerli testnet
+  5: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  
+  // Polygon Amoy testnet
+  80002: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  
+  // Localhost
+  1337: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  31337: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+};
+
+// Get the current chain ID
+export const getChainId = async () => {
+  if (!window.ethereum) throw new Error("No Ethereum provider found");
+  
+  try {
+    const hexChainId = await window.ethereum.request({ method: 'eth_chainId' });
+    return parseInt(hexChainId, 16);
+  } catch (error) {
+    console.error("Error getting chain ID:", error);
+    throw error;
+  }
+};
+
+// Get contract directly without any dynamic imports
+export const getDirectContract = async (signerOrProvider) => {
+  if (!signerOrProvider) throw new Error("No signer or provider available");
+  
+  try {
+    // Get chain ID
+    let chainId;
+    
+    if (signerOrProvider.provider?.network?.chainId) {
+      // For signers
+      chainId = signerOrProvider.provider.network.chainId;
+    } else if (signerOrProvider.network?.chainId) {
+      // For providers
+      chainId = signerOrProvider.network.chainId;
+    } else {
+      // Try to get it from ethereum
+      chainId = await getChainId();
+    }
+    
+    console.log(`Current chain ID: ${chainId}`);
+    
+    // Get contract address for this network
+    const contractAddress = CONTRACT_ADDRESSES[chainId];
+    if (!contractAddress) {
+      throw new Error(`No contract deployed on network with chain ID ${chainId}`);
+    }
+    
+    console.log(`Using contract address: ${contractAddress}`);
+    
+    // Create and return contract instance
+    return new ethers.Contract(contractAddress, CONTRACT_ABI, signerOrProvider);
+  } catch (error) {
+    console.error("Error creating contract instance:", error);
+    throw error;
+  }
+};
+
+// Helper functions that work with the direct contract
+
+export const getDirectMintPrice = async (contract) => {
+  const price = await contract.getMintPrice();
+  return ethers.utils.formatEther(price);
+};
+
+export const getDirectCurrentSupply = async (contract) => {
+  const supply = await contract.getCurrentSupply();
+  return supply.toNumber();
+};
+
+export const getDirectMaxSupply = async (contract) => {
+  const maxSupply = await contract.getMaxSupply();
+  return maxSupply.toNumber();
+};
+
+// Function to mint a new NFT
+export const directMintNFT = async (contract, tokenURI) => {
+  try {
+    // Get the mint price from the contract
+    const mintPrice = await contract.getMintPrice();
+    console.log('Mint price:', ethers.utils.formatEther(mintPrice), 'ETH');
+    
+    // The smart contract's publicMint function only takes the URI as a parameter
+    // and the value is sent as part of the transaction options
+    const tx = await contract.publicMint(tokenURI, { 
+      value: mintPrice,
+      gasLimit: 250000 // Add a reasonable gas limit to avoid transaction failures
+    });
+    
+    console.log('Mint transaction sent:', tx.hash);
+    return tx;
+  } catch (error) {
+    console.error('Error in mintNFT function:', error);
+    throw error; // Re-throw to allow component-level error handling
+  }
+};
+
+// Function to get owned tokens
+export const getDirectOwnedTokens = async (contract, owner) => {
+  try {
+    // Get the balance of the owner
+    const balance = await contract.balanceOf(owner);
+    const balanceNumber = balance.toNumber();
+    
+    if (balanceNumber === 0) {
+      return [];
+    }
+    
+    // Get all token IDs owned by the address
+    const tokenPromises = [];
+    for (let i = 0; i < balanceNumber; i++) {
+      const tokenIdPromise = contract.tokenOfOwnerByIndex(owner, i)
+        .then(async (tokenId) => {
+          const uri = await contract.tokenURI(tokenId);
+          return {
+            id: tokenId.toNumber(),
+            uri
+          };
+        });
+      tokenPromises.push(tokenIdPromise);
+    }
+    
+    return Promise.all(tokenPromises);
+  } catch (error) {
+    console.error("Error getting owned tokens:", error);
+    throw error;
+  }
+};

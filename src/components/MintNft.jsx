@@ -3,8 +3,10 @@ import { PlusCircle, Sparkles, Check, AlertTriangle, RefreshCw } from 'lucide-re
 import { Button, Card, Row, Col, Form, Alert, Spinner, Badge } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import useWallet from '../hooks/useWallet';
-import useContract from '../hooks/useContract';
-import { mintNFT, getNetworkConfig } from '../utils/contract';
+// Import the direct contract hook instead of the original one
+import useDirectContract from '../hooks/useDirectContract';
+// Import the direct mint function
+import { directMintNFT } from '../utils/directContract';
 
 // Sample NFT metadata options
 const SAMPLE_NFTS = [
@@ -27,7 +29,8 @@ const SAMPLE_NFTS = [
 
 function MintNft() {
   const { isConnected, signer, address, chainId, changeNetwork } = useWallet();
-  const { contract, mintPrice, currentSupply, maxSupply, refreshContractData, error: contractError } = useContract(signer, null);
+  // Use the direct contract hook instead
+  const { contract, mintPrice, currentSupply, maxSupply, refreshContractData, error: contractError } = useDirectContract(signer, null);
   
   // Force component to check wallet status
   const [walletConnected, setWalletConnected] = useState(isConnected);
@@ -109,8 +112,8 @@ function MintNft() {
       console.log('Attempting to mint NFT with URI:', tokenURI);
       console.log('Contract instance:', contract);
       
-      // Call mint function with proper error handling
-      const tx = await mintNFT(contract, tokenURI);
+      // Call direct mint function with proper error handling
+      const tx = await directMintNFT(contract, tokenURI);
       console.log('Transaction initiated:', tx);
       
       setTransaction(tx.hash);
