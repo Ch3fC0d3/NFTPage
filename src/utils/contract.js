@@ -1,55 +1,37 @@
 import { ethers } from "ethers";
 // Import contract ABI
 import contractAbi from "../../artifacts/contracts/CryptoCanvas.sol/CryptoCanvas.json";
-// Import all deployment files statically to avoid dynamic import issues in production
-import localhostDeployment from '../deployments/localhost.json';
-import goerliDeployment from '../deployments/goerli.json';
-import sepoliaDeployment from '../deployments/sepolia.json';
-import amoyDeployment from '../deployments/amoy.json';
-// Optional: import other network deployments if available
-// import mumbaiDeployment from '../deployments/mumbai.json';
-// import mainnetDeployment from '../deployments/mainnet.json';
-
-// Create a mapping of chain IDs to deployment info
-const deploymentsByChainId = {
-  1: { deployment: null, name: 'mainnet' }, // Ethereum Mainnet
-  5: { deployment: goerliDeployment, name: 'goerli' }, // Goerli Testnet
-  11155111: { deployment: sepoliaDeployment, name: 'sepolia' }, // Sepolia Testnet
-  80002: { deployment: amoyDeployment, name: 'amoy' }, // Polygon Amoy Testnet
-  1337: { deployment: localhostDeployment, name: 'localhost' }, // Local development
-  31337: { deployment: localhostDeployment, name: 'localhost' }, // Hardhat network
-  // Add other networks as needed
-  // 80001: { deployment: mumbaiDeployment, name: 'mumbai' }, // Polygon Mumbai Testnet
-};
+// Import consolidated deployment data
+import deploymentData from '../deployments/index.js';
 
 // Get network configuration based on connected chain
 export const getNetworkConfig = async () => {
-  // Get network from the connected provider
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  return provider.getNetwork()
-    .then(network => {
-      try {
-        // Get deployment info for the current chain ID
-        const deploymentInfo = deploymentsByChainId[network.chainId];
-        
-        if (!deploymentInfo || !deploymentInfo.deployment) {
-          console.error(`No deployment found for chain ID ${network.chainId}`);
-          throw new Error(`Contract not deployed to network with chain ID ${network.chainId}`);
-        }
-        
-        console.log(`Connected to ${deploymentInfo.name} network with chain ID ${network.chainId}`);
-        
-        return { 
-          contractAddress: deploymentInfo.deployment.contractAddress,
-          contractAbi: contractAbi.abi,
-          chainId: network.chainId,
-          networkName: deploymentInfo.name
-        };
-      } catch (error) {
-        console.error("Failed to load contract deployment info:", error);
-        throw new Error(`Contract not deployed to network with chain ID ${network.chainId}`);
-      }
-    });
+  try {
+    // Get network from the connected provider
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const network = await provider.getNetwork();
+    console.log(`Current chain ID: 0x${network.chainId.toString(16)}`);
+    
+    // Get deployment info for the current chain ID
+    const deploymentInfo = deploymentData[network.chainId];
+    
+    if (!deploymentInfo || !deploymentInfo.contractAddress) {
+      console.error(`No deployment found for chain ID ${network.chainId}`);
+      throw new Error(`Contract not deployed to network with chain ID ${network.chainId}`);
+    }
+    
+    console.log(`Connected to ${deploymentInfo.networkName} network with chain ID ${network.chainId}`);
+    
+    return { 
+      contractAddress: deploymentInfo.contractAddress,
+      contractAbi: contractAbi.abi,
+      chainId: network.chainId,
+      networkName: deploymentInfo.networkName
+    };
+  } catch (error) {
+    console.error("Failed to load contract deployment info:", error);
+    throw error;
+  }
 };
 
 export const getContract = async (signerOrProvider) => {
