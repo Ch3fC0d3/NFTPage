@@ -2,6 +2,9 @@
   "name": "nftman",
   "version": "1.0.0",
   "description": "Minimal ERC-721 NFT on Sepolia with Hardhat, Ethers, OpenZeppelin",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "test": "npx hardhat test",
     "deploy:local": "npx hardhat run scripts/deploy.js --network localhost",
@@ -11,7 +14,9 @@
     "set-base-uri:local": "npx hardhat run scripts/set-base-uri.js --network localhost",
     "set-base-uri:sepolia": "npx hardhat run scripts/set-base-uri.js --network sepolia",
     "check-balance": "npx hardhat run scripts/check-balance.js --network sepolia",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "npm install",
+    "postinstall": "npm install --no-save hardhat"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
