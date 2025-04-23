@@ -1,0 +1,35 @@
+{
+  "name": "nftman-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "2.8.2",
+    "@emotion/react": "11.11.4",
+    "@emotion/styled": "11.11.0",
+    "@rainbow-me/rainbowkit": "1.0.2",
+    "ethers": "6.12.0",
+    "framer-motion": "11.0.17",
+    "next": "14.2.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "wagmi": "1.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.20",
+    "browserify-zlib": "^0.2.0",
+    "crypto-browserify": "^3.12.1",
+    "eslint": "8.56.0",
+    "eslint-config-next": "14.2.3",
+    "https-browserify": "^1.0.0",
+    "os-browserify": "^0.3.0",
+    "path-browserify": "^1.0.1",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0"
+  }
+}
