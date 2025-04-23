@@ -1,0 +1,28 @@
+# Node.js dependencies
+node_modules/
+
+# Hardhat artifacts and cache
+artifacts/
+cache/
+
+# Environment variables (contains private keys and API keys)
+.env
+
+# Build files
+build/
+dist/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

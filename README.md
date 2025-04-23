@@ -1,34 +1,104 @@
-# Minimal ERC-721 NFT (Sepolia)
+# NFT Manager
 
-A simple ERC-721 (NFT) smart contract using OpenZeppelin, Hardhat, and Ethers.js. Deploys to Sepolia testnet and allows minting via script or MetaMask.
+A full-featured NFT management application with smart contract deployment, minting, and a web interface. Built with Hardhat, Ethers.js, Express, and OpenZeppelin.
+
+## Features
+
+- ERC-721 NFT smart contract with minting functionality
+- Web interface for minting and viewing NFTs
+- Dynamic NFT metadata generation
+- Support for both local Hardhat network and Sepolia testnet
+- Automatic image generation for NFTs
+- RESTful API for NFT metadata
 
 ## Prerequisites
+
 - Node.js & npm
-- [MetaMask](https://metamask.io/) wallet with Sepolia ETH
-- Sepolia RPC endpoint (e.g., from [Alchemy](https://www.alchemy.com/) or [Infura](https://www.infura.io/))
+- [MetaMask](https://metamask.io/) wallet
+- Sepolia testnet ETH (for testnet deployment)
 
 ## Setup
-1. Install dependencies:
+
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/yourusername/nft-manager.git
+   cd nft-manager
+   ```
+
+2. Install dependencies:
    ```sh
    npm install
    ```
-2. Copy `.env.example` to `.env` and fill in:
-   - `SEPOLIA_RPC_URL`: Your Sepolia RPC URL
-   - `PRIVATE_KEY`: Your wallet private key (never share this!)
 
-## Deploy to Sepolia
-```sh
-npm run deploy
-```
-- Note the deployed contract address.
+3. Configure your environment:
+   - Copy `.env.example` to `.env` (if it doesn't exist)
+   - Update the following values in `.env`:
+     - `SEPOLIA_RPC_URL`: Your Sepolia RPC URL
+     - `PRIVATE_KEY`: Your wallet private key (never share this!)
+     - `RECIPIENT_ADDRESS`: The wallet address to receive minted NFTs
 
-## Mint an NFT
-1. Add to `.env`:
-   - `CONTRACT_ADDRESS`: The deployed contract address
-   - `RECIPIENT_ADDRESS`: The wallet address to receive the NFT
-2. Run:
+## Running Locally
+
+1. Start a local Hardhat node:
    ```sh
-   npm run mint
+   npx hardhat node
+   ```
+
+2. In a new terminal, deploy the contract to the local network:
+   ```sh
+   npx hardhat run scripts/deploy.js --network localhost
+   ```
+
+3. Set the base URI for your NFTs:
+   ```sh
+   npx hardhat run scripts/set-base-uri.js --network localhost
+   ```
+
+4. Start the web server:
+   ```sh
+   node server.js
+   ```
+
+5. Open your browser and navigate to:
+   ```
+   http://localhost:8000
+   ```
+
+## Deploying to Sepolia Testnet
+
+1. Make sure you have Sepolia ETH in your wallet
+
+2. Deploy the contract:
+   ```sh
+   npx hardhat run scripts/deploy.js --network sepolia
+   ```
+
+3. Set the base URI (update with your server URL if needed):
+   ```sh
+   npx hardhat run scripts/set-base-uri.js --network sepolia
+   ```
+
+## Web Interface
+
+The web interface allows you to:
+- Connect your MetaMask wallet
+- Switch between local and Sepolia networks
+- Mint new NFTs
+- View your NFT collection
+- See metadata and images for your NFTs
+
+## Project Structure
+
+- `contracts/`: Smart contract code
+- `scripts/`: Deployment and interaction scripts
+- `public/`: Static assets and NFT metadata/images
+- `server.js`: Express server for the web interface and metadata API
+- `nft.html`: Main web interface
+- `config.js`: Configuration for the web interface
+
+## License
+
+MIT
    ```
 
 ## Test Locally

@@ -193,7 +193,10 @@
     // === CONFIG ===
     // config.js sets window.CONFIG
     const CONFIG = window.CONFIG;
-    const CONTRACT_ADDRESS = CONFIG.CONTRACT_ADDRESS;
+    // Get network-specific contract addresses
+    const CONTRACT_ADDRESSES = CONFIG.CONTRACT_ADDRESS;
+    // Will be set based on selected network
+    let currentContractAddress = null;
     const CONTRACT_ABI = CONFIG.ABI;
     const SEPOLIA_RPC_URL = CONFIG.SEPOLIA_RPC_URL;
 
@@ -528,18 +531,24 @@
         }
         console.log('Signer obtained successfully');
         
+        // Get the current network from the select element
+        const currentNetwork = networkSelect.value;
+        
+        // Get the contract address for the current network
+        currentContractAddress = CONTRACT_ADDRESSES[currentNetwork];
+        
         // Create contract instance
-        if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS === '') {
-          console.error('Contract address not set');
-          showStatus('Contract address not configured. Please check your setup.', 'danger');
+        if (!currentContractAddress || currentContractAddress === '') {
+          console.error(`Contract address not set for network: ${currentNetwork}`);
+          showStatus(`Contract address not configured for ${currentNetwork}. Please check your setup.`, 'danger');
           return;
         }
         
         console.log(`Connected wallet address: ${userAddress}`);
         
         // Create contract instance
-        console.log(`Creating contract instance with address: ${CONTRACT_ADDRESS}`);
-        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        console.log(`Creating contract instance with address: ${currentContractAddress} for network ${currentNetwork}`);
+        contract = new ethers.Contract(currentContractAddress, CONTRACT_ABI, signer);
         console.log('Contract instance created successfully');
         
         // Enable buttons
@@ -694,7 +703,7 @@
       }
       
       console.log('Connected wallet address:', userAddress);
-      console.log('Contract address:', CONTRACT_ADDRESS);
+      console.log('Contract address:', currentContractAddress);
       
       try {
         // Get balance of NFTs for connected address
