@@ -1,8 +1,10 @@
-<<<<<<< HEAD
+
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { createCanvas } = require('canvas');
+const { pinFileToIPFS, pinJSONToIPFS, getIPFSGatewayURL } = require('./utils/pinata');
+require('dotenv').config();
 
 // Create Express app
 const app = express();
@@ -257,8 +259,8 @@ app.get('/api/nft/:tokenId', (req, res) => {
     
     // Define paths for image and metadata
     const imagePath = path.join(imageDir, `${id}.png`);
-    // Use an absolute URL that works with the static file serving
-    const imageUrl = `http://localhost:8000/public/nfts/images/${id}.png`;
+    // Default to local URL, will be updated if IPFS pinning succeeds
+    let imageUrl = `http://localhost:8000/public/nfts/images/${id}.png`;
     
     console.log(`Image path: ${imagePath}`);
     console.log(`Image URL: ${imageUrl}`);
@@ -285,6 +287,27 @@ app.get('/api/nft/:tokenId', (req, res) => {
     if (!fs.existsSync(imagePath)) {
       console.error(`Failed to generate or find NFT art: ${imagePath}`);
       return res.status(500).json({ error: 'Failed to generate NFT art' });
+    }
+    
+    // Pin the image to IPFS if Pinata keys are available
+    let ipfsImageHash = null;
+    try {
+      if (process.env.PINATA_API_KEY && process.env.PINATA_API_SECRET) {
+        console.log(`Pinning image for token ID ${id} to IPFS...`);
+        ipfsImageHash = await pinFileToIPFS(imagePath, `NFT-${id}-image`);
+        
+        if (ipfsImageHash) {
+          // Update the image URL to use IPFS
+          imageUrl = getIPFSGatewayURL(ipfsImageHash);
+          console.log(`Image pinned to IPFS with hash: ${ipfsImageHash}`);
+          console.log(`IPFS URL: ${imageUrl}`);
+        }
+      } else {
+        console.log('Pinata API keys not found, skipping IPFS pinning');
+      }
+    } catch (ipfsError) {
+      console.error(`Error pinning image to IPFS: ${ipfsError.message}`);
+      // Continue with local URL if IPFS pinning fails
     }
     
     // Generate random attributes based on token ID
@@ -346,6 +369,29 @@ app.get('/api/nft/:tokenId', (req, res) => {
     };
     
     console.log(`Returning metadata for token ID: ${id}`);
+    
+    // Pin metadata to IPFS if Pinata keys are available
+    try {
+      if (process.env.PINATA_API_KEY && process.env.PINATA_API_SECRET) {
+        console.log(`Pinning metadata for token ID ${id} to IPFS...`);
+        const ipfsMetadataHash = await pinJSONToIPFS(metadata, `NFT-${id}-metadata`);
+        
+        if (ipfsMetadataHash) {
+          // Add IPFS information to the metadata response
+          metadata.ipfs = {
+            image: ipfsImageHash,
+            metadata: ipfsMetadataHash,
+            image_url: ipfsImageHash ? getIPFSGatewayURL(ipfsImageHash) : null,
+            metadata_url: getIPFSGatewayURL(ipfsMetadataHash)
+          };
+          console.log(`Metadata pinned to IPFS with hash: ${ipfsMetadataHash}`);
+        }
+      }
+    } catch (ipfsError) {
+      console.error(`Error pinning metadata to IPFS: ${ipfsError.message}`);
+      // Continue without IPFS data if pinning fails
+    }
+    
     // Return the metadata
     res.json(metadata);
   } catch (error) {

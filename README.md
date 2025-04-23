@@ -12,6 +12,7 @@ A full-featured NFT management application with smart contract deployment, minti
 - RESTful API for NFT metadata
 - Seamless MetaMask wallet integration with network detection and switching
 - Responsive UI with Bootstrap
+- IPFS integration via Pinata for decentralized storage of NFT images and metadata
 
 ## Tech Stack
 
@@ -19,12 +20,14 @@ A full-featured NFT management application with smart contract deployment, minti
 - **Backend**: Express.js, Node.js
 - **Blockchain**: Ethereum, ethers.js, Hardhat
 - **Contract Standard**: ERC-721 (NFT) with OpenZeppelin
+- **Storage**: IPFS via Pinata API
 
 ## Prerequisites
 
 - Node.js & npm
 - [MetaMask](https://metamask.io/) wallet
 - Sepolia testnet ETH (for testnet deployment)
+- [Pinata](https://www.pinata.cloud/) account (for IPFS storage)
 
 ## Setup
 
