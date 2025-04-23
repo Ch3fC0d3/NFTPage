@@ -4,25 +4,52 @@ node_modules/
 # Hardhat artifacts and cache
 artifacts/
 cache/
+coverage/
+coverage.json
+typechainDeprecated/
 
 # Environment variables (contains private keys and API keys)
 .env
+.env.local
+.env.development
+.env.test
+.env.production
 
 # Build files
 build/
 dist/
+dist-ssr/
+*.local
 
 # Logs
 logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # IDE and editor files
 .idea/
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 *.swp
 *.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Typechain
+typechain/
+typechain-types/
+
+# misc
+.notes.md
+.env.backup

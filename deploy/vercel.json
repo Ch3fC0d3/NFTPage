@@ -1,5 +1,11 @@
 {
   "version": 2,
+<<<<<<< HEAD
+=======
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+>>>>>>> 3e8c39bc6a426145161933856350cf36a53d009e
   "builds": [
     {
       "src": "package.json",

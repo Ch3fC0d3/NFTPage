@@ -10,6 +10,15 @@ A full-featured NFT management application with smart contract deployment, minti
 - Support for both local Hardhat network and Sepolia testnet
 - Automatic image generation for NFTs
 - RESTful API for NFT metadata
+- Seamless MetaMask wallet integration with network detection and switching
+- Responsive UI with Bootstrap
+
+## Tech Stack
+
+- **Frontend**: HTML, JavaScript, Bootstrap
+- **Backend**: Express.js, Node.js
+- **Blockchain**: Ethereum, ethers.js, Hardhat
+- **Contract Standard**: ERC-721 (NFT) with OpenZeppelin
 
 ## Prerequisites
 
@@ -21,8 +30,8 @@ A full-featured NFT management application with smart contract deployment, minti
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/yourusername/nft-manager.git
-   cd nft-manager
+   git clone https://github.com/Ch3fC0d3/NFTManager.git
+   cd NFTManager
    ```
 
 2. Install dependencies:
@@ -96,9 +105,15 @@ The web interface allows you to:
 - `nft.html`: Main web interface
 - `config.js`: Configuration for the web interface
 
+## Contract Deployments
+
+- **Localhost**: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+- **Sepolia Testnet**: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+
 ## License
 
 MIT
+<<<<<<< HEAD
    ```
 
 ## Test Locally
@@ -117,3 +132,5 @@ npm test
 
 ## License
 MIT
+=======
+>>>>>>> 3e8c39bc6a426145161933856350cf36a53d009e

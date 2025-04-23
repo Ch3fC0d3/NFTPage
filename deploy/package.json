@@ -2,6 +2,7 @@
   "name": "nftman-frontend",
   "version": "1.0.0",
   "private": true,
+<<<<<<< HEAD
   "scripts": {
     "start": "next start",
     "build": "next build"
@@ -17,5 +18,26 @@
     "@emotion/react": "11.11.4",
     "@emotion/styled": "11.11.0",
     "framer-motion": "11.0.17"
+=======
+  "engines": {
+    "node": "18.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "13.4.19",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "ethers": "5.7.2",
+    "@rainbow-me/rainbowkit": "0.12.14",
+    "wagmi": "0.12.13",
+    "@chakra-ui/react": "2.7.1",
+    "@emotion/react": "11.11.1",
+    "@emotion/styled": "11.11.0",
+    "framer-motion": "10.12.18"
+>>>>>>> 3e8c39bc6a426145161933856350cf36a53d009e
   }
 }
