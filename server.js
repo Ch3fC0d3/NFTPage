@@ -528,7 +528,7 @@ app.get('/api/nfts', (req, res) => {
 /**
  * Start the server
  */
-const PORT = 8000;
+const PORT = process.env.PORT || 8000;
 const server = app.listen(PORT, () => {
   console.log('='.repeat(50));
   console.log(`NFT Server started successfully!`);
