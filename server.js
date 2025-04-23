@@ -242,7 +242,7 @@ function generateNFTArt(tokenId, outputPath) {
 /**
  * Generate and serve NFT metadata
  */
-app.get('/api/nft/:tokenId', (req, res) => {
+app.get('/api/nft/:tokenId', async (req, res) => {
   const tokenId = req.params.tokenId;
   console.log(`API request for NFT metadata: tokenId=${tokenId}`);
   
@@ -330,7 +330,7 @@ app.get('/api/nft/:tokenId', (req, res) => {
       name: `Geometric NFT #${id}`,
       description: `A unique algorithmically generated NFT with ID ${id}`,
       image: imageUrl,
-      external_url: `http://localhost:8000/nft.html?id=${id}`,
+      external_url: `https://nftpage.ondigitalocean.app/nft.html?id=${id}`,
       attributes: [
         {
           trait_type: 'Token ID',
@@ -551,30 +551,4 @@ process.on('SIGINT', () => {
     console.log('Server shut down successfully');
     process.exit(0);
   });
-=======
-// Simple Express server for serving the static build
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Get directory name for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
-
-// Serve static files from the dist directory
-app.use(express.static(path.join(__dirname, 'dist')));
-
-// For any route, serve the index.html file (for client-side routing)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-// Get the port from the environment variable or use 8080 as default
-const PORT = process.env.PORT || 8080;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
->>>>>>> 3e8c39bc6a426145161933856350cf36a53d009e
 });
