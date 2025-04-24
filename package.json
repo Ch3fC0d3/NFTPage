@@ -1,41 +1,27 @@
 {
-<<<<<<< HEAD
-  "name": "nftman",
-  "version": "1.0.0",
-  "description": "Minimal ERC-721 NFT on Sepolia with Hardhat, Ethers, OpenZeppelin",
-  "scripts": {
-    "test": "npx hardhat test",
-    "deploy": "npx hardhat run scripts/deploy.js --network sepolia",
-    "mint": "npx hardhat run scripts/mint.js --network sepolia"
-  },
-  "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
-    "dotenv": "^16.0.0"
-  },
-  "dependencies": {
-    "@openzeppelin/contracts": "^5.0.0",
-    "canvas": "^3.1.0",
-    "express": "^5.1.0"
-=======
   "name": "nft-collection-project",
   "private": true,
   "version": "0.1.0",
-  "type": "module",
   "engines": {
     "node": "18.x"
   },
   "scripts": {
+    "test": "npx hardhat test",
+    "deploy": "npx hardhat run scripts/deploy.js --network sepolia",
+    "mint": "npx hardhat run scripts/mint.js --network sepolia",
     "dev": "webpack serve --mode development",
     "prebuild": "node build-fix.cjs",
     "build": "webpack",
     "postbuild": "node -e \"require('fs-extra').copySync('public', 'dist', {overwrite: true})\"",
-    "start": "node server.js",
+    "start": "node fixed-server.js",
+    "simple": "node simple-server.js",
     "do:build": "npm install webpack webpack-cli html-webpack-plugin babel-loader @babel/core @babel/preset-env @babel/preset-react buffer stream-browserify process && npm run build"
   },
   "dependencies": {
     "bootstrap": "^5.3.2",
+    "canvas": "^3.1.0",
     "ethers": "^5.7.2",
-    "express": "5.1.0",
+    "express": "^5.1.0",
     "fs-extra": "11.3.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
@@ -53,10 +39,10 @@
     "@ethersproject/providers": "^5.7.2",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
-    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",
-    "@openzeppelin/contracts": "^4.9.5",
+    "@openzeppelin/contracts": "4.9.3",
     "@typechain/ethers-v5": "10.2.0",
     "@typechain/hardhat": "6.1.2",
     "@types/mocha": "10.0.10",
@@ -92,6 +78,5 @@
     "webpack": "5.99.6",
     "webpack-cli": "6.0.1",
     "webpack-dev-server": "5.2.1"
->>>>>>> 3e8c39bc6a426145161933856350cf36a53d009e
   }
 }

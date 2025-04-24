@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
  * @title CryptoCanvas
  * @dev ERC721 token with minting capability controlled by roles
  */
 contract CryptoCanvas is ERC721, ERC721URIStorage, AccessControl {
-    using Counters for Counters.Counter;
-
-    Counters.Counter private _tokenIdCounter;
+    // Using a simple counter instead of the Counters library
+    uint256 private _tokenIdCounter;
     uint256 private _maxTokenSupply;
     uint256 private _mintPrice;
 
@@ -48,7 +46,7 @@ contract CryptoCanvas is ERC721, ERC721URIStorage, AccessControl {
      * @param uri Token metadata URI
      */
     function safeMint(address to, string memory uri) public payable onlyRole(MINTER_ROLE) {
-        if (_tokenIdCounter.current() >= _maxTokenSupply) {
+        if (_tokenIdCounter >= _maxTokenSupply) {
             revert MaxSupplyReached();
         }
         
@@ -56,8 +54,8 @@ contract CryptoCanvas is ERC721, ERC721URIStorage, AccessControl {
             revert MintPriceNotPaid();
         }
 
-        uint256 tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter;
+        _tokenIdCounter += 1;
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
 
@@ -69,7 +67,7 @@ contract CryptoCanvas is ERC721, ERC721URIStorage, AccessControl {
      * @param uri Token metadata URI
      */
     function publicMint(string memory uri) external payable {
-        if (_tokenIdCounter.current() >= _maxTokenSupply) {
+        if (_tokenIdCounter >= _maxTokenSupply) {
             revert MaxSupplyReached();
         }
         
@@ -77,8 +75,8 @@ contract CryptoCanvas is ERC721, ERC721URIStorage, AccessControl {
             revert MintPriceNotPaid();
         }
 
-        uint256 tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter;
+        _tokenIdCounter += 1;
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, uri);
 
@@ -121,7 +119,7 @@ contract CryptoCanvas is ERC721, ERC721URIStorage, AccessControl {
      * @dev Get the current token supply
      */
     function getCurrentSupply() external view returns (uint256) {
-        return _tokenIdCounter.current();
+        return _tokenIdCounter;
     }
 
     /**
