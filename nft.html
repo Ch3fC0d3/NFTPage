@@ -195,8 +195,9 @@
     const CONFIG = window.CONFIG;
     // Get network-specific contract addresses
     const CONTRACT_ADDRESSES = CONFIG.CONTRACT_ADDRESS;
-    // Will be set based on selected network
-    let currentContractAddress = null;
+    // Define the mock API base URL
+    const MOCK_API_BASE_URL = 'http://localhost:4000/api/mock';
+    // Set up contract ABI
     const CONTRACT_ABI = CONFIG.ABI;
     const SEPOLIA_RPC_URL = CONFIG.SEPOLIA_RPC_URL;
 
@@ -493,37 +494,14 @@
         
         userAddress = accounts[0];
         
-        // Set up provider and signer
-        console.log('Setting up provider and signer...');
+        // Set up mock provider and signer
+        console.log('Setting up mock provider and signer...');
         try {
-          if (networkName === 'localhost') {
-            // For localhost, use JsonRpcProvider directly
-            console.log('Using JsonRpcProvider for localhost');
-            provider = new ethers.JsonRpcProvider('http://127.0.0.1:8545');
-            
-            // Get accounts from the provider to verify connection
-            const accounts = await provider.listAccounts();
-            console.log('Local accounts available:', accounts);
-            
-            // Find the matching account index
-            const accountIndex = accounts.findIndex(acc => 
-              acc.address.toLowerCase() === userAddress.toLowerCase());
-              
-            if (accountIndex >= 0) {
-              console.log(`Found matching account at index ${accountIndex}`);
-              signer = accounts[accountIndex];
-            } else {
-              // Fallback to first account if user address not found
-              console.log('User address not found in local accounts, using first account');
-              signer = accounts[0];
-              userAddress = signer.address;
-            }
-          } else {
-            // For other networks, use BrowserProvider
-            console.log('Using BrowserProvider for remote network');
-            provider = new ethers.BrowserProvider(ethereumProvider);
-            signer = await provider.getSigner();
-          }
+          // We'll use the mock API instead of actual blockchain connection
+          console.log('Using mock API endpoints for blockchain interaction');
+          
+          // Store the user address for later use
+          // No need to connect to actual blockchain
         } catch (providerError) {
           console.error('Error setting up provider:', providerError);
           showStatus(`Error connecting to network: ${providerError.message}. Please make sure your Hardhat node is running.`, 'danger');
@@ -537,7 +515,7 @@
         // Get the contract address for the current network
         currentContractAddress = CONTRACT_ADDRESSES[currentNetwork];
         
-        // Create contract instance
+        // Store network and contract info
         if (!currentContractAddress || currentContractAddress === '') {
           console.error(`Contract address not set for network: ${currentNetwork}`);
           showStatus(`Contract address not configured for ${currentNetwork}. Please check your setup.`, 'danger');
@@ -546,10 +524,8 @@
         
         console.log(`Connected wallet address: ${userAddress}`);
         
-        // Create contract instance
-        console.log(`Creating contract instance with address: ${currentContractAddress} for network ${currentNetwork}`);
-        contract = new ethers.Contract(currentContractAddress, CONTRACT_ABI, signer);
-        console.log('Contract instance created successfully');
+        // We'll use mock API instead of actual contract instance
+        console.log(`Using mock API for contract at address: ${currentContractAddress} for network ${currentNetwork}`);
         
         // Enable buttons
         mintBtn.disabled = false;
@@ -558,9 +534,11 @@
         // Show connected status
         showStatus(`Connected: ${userAddress.substring(0, 6)}...${userAddress.substring(38)}`, 'success');
         
-        // Check if user is contract owner and auto-set base URI
+        // Check if user is contract owner using mock API
         try {
-          const owner = await contract.owner();
+          const ownerResponse = await fetch(`${MOCK_API_BASE_URL}/owner`);
+          const ownerData = await ownerResponse.json();
+          const owner = ownerData.owner;
           console.log('Contract owner:', owner);
           const isOwner = owner.toLowerCase() === userAddress.toLowerCase();
           console.log('User is contract owner:', isOwner);
@@ -573,18 +551,18 @@
           console.error('Error checking owner:', ownerError);
         }
         
-        // Fetch mint price
+        // Fetch mint price from mock API
         console.log('Fetching mint price...');
         try {
-          // Explicitly call the contract function
-          const mintPriceResult = await contract.getMintPrice();
-          mintPrice = mintPriceResult;
+          const priceResponse = await fetch(`${MOCK_API_BASE_URL}/mintPrice`);
+          const priceData = await priceResponse.json();
+          mintPrice = priceData.mintPrice;
           const mintPriceEth = ethers.formatEther(mintPrice);
           mintBtn.textContent = `Mint NFT (${mintPriceEth} ETH)`;
           console.log('Mint price fetched successfully:', mintPriceEth, 'ETH');
         } catch (error) {
           console.error('Error fetching mint price:', error);
-          showStatus(`Error fetching mint price: ${error.message}. Make sure the contract is deployed properly.`, 'warning');
+          showStatus(`Error fetching mint price: ${error.message}. Make sure the mock API is working properly.`, 'warning');
           mintBtn.textContent = 'Mint NFT';
         }
         
@@ -609,7 +587,7 @@
 
     // === Mint NFT ===
     mintBtn.onclick = async () => {
-      if (!contract || !userAddress) {
+      if (!userAddress) {
         showStatus('Please connect your wallet first', 'warning');
         return;
       }
@@ -620,7 +598,9 @@
         // Get current mint price if not already set
         if (!mintPrice) {
           try {
-            mintPrice = await contract.getMintPrice();
+            const priceResponse = await fetch(`${MOCK_API_BASE_URL}/mintPrice`);
+            const priceData = await priceResponse.json();
+            mintPrice = priceData.mintPrice;
             console.log('Mint price retrieved:', ethers.formatEther(mintPrice), 'ETH');
           } catch (priceError) {
             console.error('Error getting mint price:', priceError);
@@ -631,16 +611,23 @@
         
         console.log('Minting with value:', ethers.formatEther(mintPrice), 'ETH');
         
-        // Call mint function
-        const tx = await contract.mint(userAddress, { value: mintPrice });
-        console.log('Transaction submitted:', tx.hash);
-        showStatus(`Transaction submitted. Waiting for confirmation...<br>Hash: ${tx.hash}`, 'info');
+        // Call mock mint API endpoint
+        const response = await fetch(`${MOCK_API_BASE_URL}/mint`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ address: userAddress })
+        });
         
-        // Wait for transaction to be mined
-        const receipt = await tx.wait();
-        console.log('Transaction confirmed:', receipt);
+        const data = await response.json();
         
-        showStatus('NFT minted successfully!', 'success');
+        if (data.success) {
+          console.log('Mock mint successful, token ID:', data.tokenId);
+          showStatus(`NFT minted successfully! Token ID: ${data.tokenId}`, 'success');
+        } else {
+          throw new Error(data.error || 'Unknown error during minting');
+        }
         
         // Refresh NFTs
         refreshNFTs();
@@ -697,94 +684,72 @@
 
     // === Show Owned NFTs ===
     async function refreshNFTs() {
-      if (!contract || !userAddress) {
-        console.log('Contract or user address not available');
+      const nftList = document.getElementById('nftList');
+      const refreshBtn = document.getElementById('refreshBtn');
+      
+      if (!userAddress) {
+        nftList.innerHTML = '<div class="col-12 text-center">Connect your wallet to view your NFTs</div>';
         return;
       }
       
-      console.log('Connected wallet address:', userAddress);
-      console.log('Contract address:', currentContractAddress);
+      refreshBtn.disabled = true;
+      nftList.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div></div>';
       
       try {
-        // Get balance of NFTs for connected address
-        console.log('Calling balanceOf for address:', userAddress);
-        let balance;
-        try {
-          balance = await contract.balanceOf(userAddress);
-          console.log('Balance retrieved successfully:', balance.toString());
-        } catch (balanceError) {
-          console.error('Error calling balanceOf:', balanceError);
-          showStatus('Error retrieving NFT balance. The contract might not be deployed correctly.', 'warning');
-          nftList.innerHTML = '<div class="col-12 text-center">Unable to retrieve your NFTs. Please make sure the contract is deployed correctly.</div>';
+        // Store user address for API calls
+        const address = userAddress;
+        
+        console.log(`Connected wallet address: ${address}`);
+        
+        // Get balance from mock API
+        console.log(`Calling balanceOf for address: ${address}`);
+        const balanceResponse = await fetch(`${MOCK_API_BASE_URL}/balanceOf/${address}`);
+        const balanceData = await balanceResponse.json();
+        const balanceNum = balanceData.balance;
+        
+        if (balanceNum === 0) {
+          nftList.innerHTML = '<div class="col-12 text-center">You don\'t own any NFTs yet</div>';
+          refreshBtn.disabled = false;
           return;
         }
         
-        const balanceNumber = Number(balance);
-        
-        // Clear NFT list
         nftList.innerHTML = '';
         
-        if (balanceNumber === 0) {
-          nftList.innerHTML = '<div class="col-12 text-center">You don\'t own any NFTs yet.</div>';
-          return;
-        }
-        
-        // Fetch all NFTs
-        for (let i = 0; i < balanceNumber; i++) {
+        // Loop through all NFTs
+        for (let i = 0; i < balanceNum; i++) {
           try {
-            // Get token ID at index
-            const tokenId = await contract.tokenOfOwnerByIndex(userAddress, i);
-            console.log(`Token ID at index ${i}:`, tokenId.toString());
+            // Get token ID from mock API
+            const tokenIdResponse = await fetch(`${MOCK_API_BASE_URL}/tokenOfOwnerByIndex/${address}/${i}`);
+            const tokenIdData = await tokenIdResponse.json();
+            const tokenId = tokenIdData.tokenId;
             
-            // Get token URI
-            const tokenURI = await contract.tokenURI(tokenId);
-            console.log(`Token URI for ID ${tokenId}:`, tokenURI);
+            // Get token URI from mock API
+            const tokenURIResponse = await fetch(`${MOCK_API_BASE_URL}/tokenURI/${tokenId}`);
+            const tokenURIData = await tokenURIResponse.json();
+            const tokenURI = tokenURIData.tokenURI;
             
-            // Create NFT card
+            // Create card element
             const nftCard = document.createElement('div');
-            nftCard.className = 'col-md-6 mb-3';
+            nftCard.className = 'col-md-6 col-lg-4 mb-4';
             
             try {
-              // Generate direct image URL
-              const imageUrl = `http://localhost:8000/public/nfts/images/${tokenId}.png`;
-              const directMetadataUrl = `http://localhost:8000/api/nft/${tokenId}`;
+              // Parse the token URI which contains the metadata
+              const metadata = JSON.parse(tokenURI);
               
-              // Try to fetch metadata, but have fallback if it fails
-              let metadata = null;
-              try {
-                console.log('Attempting to fetch metadata from:', directMetadataUrl);
-                const response = await fetch(directMetadataUrl);
-                if (response.ok) {
-                  // Get the response text first to check if it's valid JSON
-                  const responseText = await response.text();
-                  metadata = JSON.parse(responseText);
-                  console.log(`Metadata for token ${tokenId}:`, metadata);
-                } else {
-                  console.warn(`Metadata fetch returned status ${response.status}`);
-                }
-              } catch (jsonError) {
-                console.error('Error parsing metadata:', jsonError);
+              // Prepare image URL
+              let imageUrl = metadata.image;
+              
+              // Handle relative URLs
+              if (imageUrl && !imageUrl.startsWith('http')) {
+                const baseUrl = 'http://localhost:4000';
+                imageUrl = `${baseUrl}${imageUrl}`;
               }
               
-              // If metadata fetch failed, generate default metadata
-              if (!metadata) {
-                console.log('Using generated metadata for token', tokenId);
-                metadata = {
-                  name: `NFT #${tokenId}`,
-                  description: `This is NFT #${tokenId} from the MyNFT collection`,
-                  image: imageUrl,
-                  attributes: [
-                    { trait_type: 'Token ID', value: tokenId.toString() },
-                    { trait_type: 'Collection', value: 'MyNFT' }
-                  ]
-                };
-              }
-              
+              // Render NFT card with metadata
               nftCard.innerHTML = `
                 <div class="card h-100 nft-card">
                   <div class="position-relative overflow-hidden">
-                    <img src="${imageUrl}" class="card-img-top nft-img" alt="NFT #${tokenId}" 
-                         onerror="this.onerror=null; this.src='https://via.placeholder.com/500?text=NFT+%23${tokenId}'">
+                    <img src="${imageUrl || 'https://via.placeholder.com/500x500?text=No+Image'}" class="nft-img" alt="NFT #${tokenId}">
                     <div class="position-absolute top-0 end-0 m-2">
                       <span class="badge rounded-pill bg-primary">#${tokenId}</span>
                     </div>
@@ -814,9 +779,9 @@
                 </div>
               `;
             } catch (metadataError) {
-              console.error('Error fetching metadata:', metadataError);
+              console.error('Error parsing metadata:', metadataError);
               
-              // Fallback display if metadata can't be fetched
+              // Fallback display if metadata can't be parsed
               nftCard.innerHTML = `
                 <div class="card h-100 nft-card">
                   <div class="position-relative overflow-hidden">
@@ -833,7 +798,7 @@
                   <div class="card-body text-center">
                     <h5 class="card-title fw-bold">NFT #${tokenId}</h5>
                     <div class="alert alert-warning">Metadata unavailable</div>
-                    <div class="small">URI: ${tokenURI}</div>
+                    <div class="small">Token ID: ${tokenId}</div>
                     <div class="mt-3 d-flex justify-content-between align-items-center">
                       <small>Token ID: ${tokenId}</small>
                       <button class="btn btn-sm btn-outline-light view-btn" data-id="${tokenId}">View Details</button>
@@ -852,6 +817,8 @@
         console.error('Error loading NFTs:', error);
         nftList.innerHTML = `<div class="col-12 text-center text-danger">Error loading NFTs: ${error.message}</div>`;
       }
+      
+      refreshBtn.disabled = false;
     }
 
     refreshBtn.onclick = refreshNFTs;

@@ -18,8 +18,10 @@
     "do:build": "npm install webpack webpack-cli html-webpack-plugin babel-loader @babel/core @babel/preset-env @babel/preset-react buffer stream-browserify process && npm run build"
   },
   "dependencies": {
+    "@pinata/sdk": "2.1.0",
     "bootstrap": "^5.3.2",
     "canvas": "^3.1.0",
+    "cors": "2.8.5",
     "ethers": "^5.7.2",
     "express": "^5.1.0",
     "fs-extra": "11.3.0",

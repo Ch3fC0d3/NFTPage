@@ -7,7 +7,15 @@ const dotenv = require('dotenv');
 // Load environment variables
 dotenv.config();
 
+// Create Express app
 const app = express();
+const PORT = 4000;
+
+// Middleware to parse JSON bodies
+app.use(express.json());
+
+// Serve static files
+app.use(express.static(path.join(__dirname, '/')));
 
 // Initialize Pinata client if API keys are available
 let pinata = null;
@@ -26,71 +34,46 @@ try {
   console.error('Error initializing Pinata client:', error);
 }
 
-// Enable JSON parsing
-app.use(express.json());
+// Mock data for NFTs
+const mockNFTs = {
+  owner: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+  mintPrice: '10000000000000000', // 0.01 ETH in wei
+  balances: {},
+  ownership: {},
+  tokens: {},
+  nextTokenId: 1,
+  ipfsHashes: {} // Store IPFS hashes for metadata and images
+};
 
-// Serve static files
-app.use(express.static(path.join(__dirname)));
-app.use('/public', express.static(path.join(__dirname, 'public')));
-
-// Serve nft.html as the default page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'nft.html'));
-});
-
-// Test route to verify HTML serving
-app.get('/test', (req, res) => {
-  res.sendFile(path.join(__dirname, 'test.html'));
-});
-
-// Create directories
-const publicDir = path.join(__dirname, 'public');
-const nftsDir = path.join(publicDir, 'nfts');
-const imagesDir = path.join(nftsDir, 'images');
-
-// Create directories if they don't exist
-[publicDir, nftsDir, imagesDir].forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-    console.log(`Created directory: ${dir}`);
+// Initialize with some example NFTs
+function initializeMockData() {
+  // Create example NFTs
+  for (let i = 1; i <= 3; i++) {
+    mockNFTs.tokens[i] = {
+      name: `NFT #${i}`,
+      description: `This is a mock NFT with ID ${i}`,
+      image: `/public/nfts/images/${i}.png`,
+      attributes: [
+        { trait_type: 'Token ID', value: i.toString() },
+        { trait_type: 'Collection', value: 'MockNFT' },
+        { trait_type: 'Rarity', value: ['Common', 'Uncommon', 'Rare'][Math.floor(Math.random() * 3)] }
+      ]
+    };
   }
-});
+}
 
-// Simple test endpoint
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'API is working!' });
-});
+// Initialize mock data
+initializeMockData();
 
-// NFT metadata endpoint
-app.get('/api/nft/:tokenId', (req, res) => {
-  const tokenId = parseInt(req.params.tokenId);
-  
-  if (isNaN(tokenId) || tokenId <= 0) {
-    return res.status(400).json({ error: 'Invalid token ID' });
+// CORS middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
   }
-  
-  // Create a simple metadata object
-  const metadata = {
-    name: `Test NFT #${tokenId}`,
-    description: `This is a test NFT with ID ${tokenId}`,
-    image: `http://localhost:4000/public/nfts/images/${tokenId}.png`,
-    attributes: [
-      {
-        trait_type: 'Token ID',
-        value: tokenId
-      },
-      {
-        trait_type: 'Collection',
-        value: 'MockNFT'
-      },
-      {
-        trait_type: 'Rarity',
-        value: ['Common', 'Uncommon', 'Rare'][Math.floor(Math.random() * 3)]
-      }
-    ]
-  };
-  
-  res.json(metadata);
+  next();
 });
 
 // === MOCK API ENDPOINTS ===
@@ -98,21 +81,14 @@ app.get('/api/nft/:tokenId', (req, res) => {
 // Get contract owner
 app.get('/api/mock/owner', (req, res) => {
   console.log('GET /api/mock/owner');
-  res.json({ owner: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8' });
+  res.json({ owner: mockNFTs.owner });
 });
 
 // Get mint price
 app.get('/api/mock/mintPrice', (req, res) => {
   console.log('GET /api/mock/mintPrice');
-  res.json({ mintPrice: '10000000000000000' }); // 0.01 ETH in wei
+  res.json({ mintPrice: mockNFTs.mintPrice });
 });
-
-// Mock NFT data store
-const mockNFTs = {
-  balances: {},
-  ownership: {},
-  nextTokenId: 4 // Start after our initial 3 NFTs
-};
 
 // Pin content to IPFS using Pinata
 async function pinToIPFS(content, name) {
@@ -165,7 +141,15 @@ app.post('/api/mock/mint', async (req, res) => {
   let ipfsHash = null;
   if (pinata) {
     ipfsHash = await pinToIPFS(metadata, `NFT #${tokenId} Metadata`);
+    if (ipfsHash) {
+      mockNFTs.ipfsHashes[tokenId] = ipfsHash;
+      // Update the metadata with IPFS image URL if pinning was successful
+      metadata.image = `ipfs://${ipfsHash}`;
+    }
   }
+  
+  // Store the metadata
+  mockNFTs.tokens[tokenId] = metadata;
   
   // Update ownership
   if (!mockNFTs.ownership[address]) {
@@ -177,6 +161,9 @@ app.post('/api/mock/mint', async (req, res) => {
   mockNFTs.balances[address] = (mockNFTs.balances[address] || 0) + 1;
   
   console.log(`Minted NFT #${tokenId} for ${address}`);
+  if (ipfsHash) {
+    console.log(`Metadata pinned to IPFS: ipfs://${ipfsHash}`);
+  }
   
   res.json({ 
     success: true, 
@@ -215,23 +202,81 @@ app.get('/api/mock/tokenURI/:tokenId', (req, res) => {
   const { tokenId } = req.params;
   console.log(`GET /api/mock/tokenURI/${tokenId}`);
   
-  // For simplicity, we'll just return the metadata directly
-  const metadata = {
-    name: `NFT #${tokenId}`,
-    description: `This is a mock NFT with ID ${tokenId}`,
-    image: `/public/nfts/images/${tokenId % 3 + 1}.png`,
-    attributes: [
-      { trait_type: 'Token ID', value: tokenId.toString() },
-      { trait_type: 'Collection', value: 'MockNFT' },
-      { trait_type: 'Rarity', value: ['Common', 'Uncommon', 'Rare'][Math.floor(Math.random() * 3)] }
-    ]
-  };
+  const token = mockNFTs.tokens[tokenId];
   
-  // Return the token metadata as a JSON string
-  res.json({ tokenURI: JSON.stringify(metadata) });
+  if (!token) {
+    return res.status(404).json({ error: 'Token not found' });
+  }
+  
+  // If we have an IPFS hash for this token, return the IPFS URI
+  const ipfsHash = mockNFTs.ipfsHashes[tokenId];
+  if (ipfsHash) {
+    res.json({ tokenURI: `ipfs://${ipfsHash}` });
+  } else {
+    // Otherwise return the token metadata as a JSON string
+    res.json({ tokenURI: JSON.stringify(token) });
+  }
 });
 
-// Pinata status check
+// Get NFT metadata directly
+app.get('/api/nft/:tokenId', (req, res) => {
+  const { tokenId } = req.params;
+  console.log(`GET /api/nft/${tokenId}`);
+  
+  const token = mockNFTs.tokens[tokenId];
+  
+  if (!token) {
+    return res.status(404).json({ error: 'Token not found' });
+  }
+  
+  res.json(token);
+});
+
+// Pin existing NFT to IPFS
+app.post('/api/mock/pin/:tokenId', async (req, res) => {
+  const { tokenId } = req.params;
+  console.log(`POST /api/mock/pin/${tokenId}`);
+  
+  const token = mockNFTs.tokens[tokenId];
+  
+  if (!token) {
+    return res.status(404).json({ error: 'Token not found' });
+  }
+  
+  if (!pinata) {
+    return res.status(503).json({ 
+      success: false, 
+      error: 'Pinata client not initialized. Check your API keys.' 
+    });
+  }
+  
+  try {
+    // Pin the metadata to IPFS
+    const ipfsHash = await pinToIPFS(token, `NFT #${tokenId} Metadata`);
+    
+    if (!ipfsHash) {
+      return res.status(500).json({ success: false, error: 'Failed to pin to IPFS' });
+    }
+    
+    // Store the IPFS hash
+    mockNFTs.ipfsHashes[tokenId] = ipfsHash;
+    
+    // Update the token's image URL to use IPFS
+    token.image = `ipfs://${ipfsHash}`;
+    
+    res.json({ 
+      success: true, 
+      tokenId,
+      ipfsHash: ipfsHash,
+      ipfsUrl: `https://gateway.pinata.cloud/ipfs/${ipfsHash}`
+    });
+  } catch (error) {
+    console.error('Error pinning to IPFS:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get Pinata API status
 app.get('/api/mock/pinata/status', async (req, res) => {
   if (!pinata) {
     return res.json({ 
@@ -260,13 +305,24 @@ app.get('/api/mock/pinata/status', async (req, res) => {
   }
 });
 
+// Catch-all route to serve the main HTML file
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'nft.html'));
+});
+
 // Start the server
-const PORT = 4000;
 app.listen(PORT, () => {
-  console.log(`Mock NFT server running at http://localhost:${PORT}`);
-  console.log(`NFT interface available at: http://localhost:${PORT}`);
-  console.log(`Test the API at: http://localhost:${PORT}/api/test`);
-  console.log(`Test NFT metadata at: http://localhost:${PORT}/api/nft/1`);
+  console.log(`Mock NFT server with Pinata IPFS support running at http://localhost:${PORT}`);
+  console.log('Available mock API endpoints:');
+  console.log('- GET  /api/mock/owner');
+  console.log('- GET  /api/mock/mintPrice');
+  console.log('- POST /api/mock/mint');
+  console.log('- GET  /api/mock/balanceOf/:address');
+  console.log('- GET  /api/mock/tokenOfOwnerByIndex/:address/:index');
+  console.log('- GET  /api/mock/tokenURI/:tokenId');
+  console.log('- GET  /api/nft/:tokenId');
+  console.log('- POST /api/mock/pin/:tokenId');
+  console.log('- GET  /api/mock/pinata/status');
   
   if (!pinata) {
     console.log('\nPinata integration is DISABLED.');

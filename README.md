@@ -10,6 +10,7 @@ A full-featured NFT management application with smart contract deployment, minti
 - Support for both local Hardhat network and Sepolia testnet
 - Automatic image generation for NFTs
 - RESTful API for NFT metadata
+- Mock API server for development without blockchain
 - Seamless MetaMask wallet integration with network detection and switching
 - Responsive UI with Bootstrap
 
@@ -65,12 +66,17 @@ A full-featured NFT management application with smart contract deployment, minti
 
 4. Start the web server:
    ```sh
-   node server.js
+   node working-server.js
    ```
 
-5. Open your browser and navigate to:
+5. For development with mock blockchain (no Hardhat required):
+   ```sh
+   node mock-api-server.js
    ```
-   http://localhost:8000
+
+6. Open your browser and navigate to:
+   ```
+   http://localhost:8888
    ```
 
 ## Deploying to Sepolia Testnet
@@ -101,7 +107,8 @@ The web interface allows you to:
 - `contracts/`: Smart contract code
 - `scripts/`: Deployment and interaction scripts
 - `public/`: Static assets and NFT metadata/images
-- `server.js`: Express server for the web interface and metadata API
+- `working-server.js`: Express server for the web interface and metadata API
+- `mock-api-server.js`: Mock blockchain API server for development
 - `nft.html`: Main web interface
 - `config.js`: Configuration for the web interface
 

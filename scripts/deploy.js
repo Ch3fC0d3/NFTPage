@@ -25,7 +25,7 @@ async function main() {
   }
   
   fs.writeFileSync(envPath, envContent);
-  console.log(`Updated .env file with CONTRACT_ADDRESS=${myNFTAddress}`);
+  console.log(`Updated .env file with CONTRACT_ADDRESS=${simpleNFTAddress}`);
   
   // Also update the config.js file for the frontend
   try {
