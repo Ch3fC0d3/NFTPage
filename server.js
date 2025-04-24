@@ -9,6 +9,24 @@ require('dotenv').config();
 // Create Express app
 const app = express();
 
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('UNCAUGHT EXCEPTION:', error);
+  // Continue running despite the error
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('UNHANDLED REJECTION:', reason);
+  // Continue running despite the rejection
+});
+
+// Log environment and configuration
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PORT:', process.env.PORT || 8000);
+console.log('Pinata API Key available:', !!process.env.PINATA_API_KEY);
+console.log('Pinata API Secret available:', !!process.env.PINATA_API_SECRET);
+
 // Enable JSON parsing for request bodies
 app.use(express.json());
 
@@ -36,11 +54,16 @@ function ensureDirectoriesExist() {
   const dirs = [publicDir, metadataDir, imageDir];
   
   dirs.forEach(dir => {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-      console.log(`Created directory: ${dir}`);
-    } else {
-      console.log(`Directory already exists: ${dir}`);
+    try {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        console.log(`Created directory: ${dir}`);
+      } else {
+        console.log(`Directory already exists: ${dir}`);
+      }
+    } catch (error) {
+      console.error(`Error creating directory ${dir}:`, error.message);
+      // Continue despite directory creation errors
     }
   });
 }
@@ -448,7 +471,10 @@ app.get('/debug/image/:tokenId', (req, res) => {
     imageDirExists: fs.existsSync(imageDir),
     publicDirExists: fs.existsSync(publicDir),
     serverRoot: __dirname,
-    imageUrl: `http://localhost:8000/public/nfts/images/${id}.png`
+    // Use dynamic PORT variable instead of hardcoded port
+    imageUrl: `/public/nfts/images/${id}.png`,
+    port: process.env.PORT || 8000,
+    nodeEnv: process.env.NODE_ENV || 'development'
   };
   
   res.json(result);
@@ -481,7 +507,7 @@ app.get('/generate-image/:tokenId', (req, res) => {
       success: true,
       tokenId: id,
       imagePath: imagePath,
-      imageUrl: `http://localhost:8000/public/nfts/images/${id}.png`,
+      imageUrl: `http://localhost:${PORT}/public/nfts/images/${id}.png`,
       imageExists: fs.existsSync(imagePath)
     });
   } catch (error) {
@@ -492,7 +518,6 @@ app.get('/generate-image/:tokenId', (req, res) => {
     });
   }
 });
-
 /**
  * Endpoint to list all generated NFTs
  */
@@ -510,13 +535,20 @@ app.get('/api/nfts', (req, res) => {
     const nfts = files
       .filter(file => file.endsWith('.png'))
       .map(file => {
-        const tokenId = parseInt(file.replace('.png', ''));
-        return {
-          tokenId,
-          imageUrl: `http://localhost:8000/public/nfts/images/${tokenId}.png`,
-          metadataUrl: `http://localhost:8000/api/nft/${tokenId}`
-        };
-      });
+        try {
+          const tokenId = parseInt(file.replace('.png', ''));
+          // Use relative URLs instead of hardcoded localhost
+          return {
+            tokenId,
+            imageUrl: `/public/nfts/images/${tokenId}.png`,
+            metadataUrl: `/api/nft/${tokenId}`
+          };
+        } catch (err) {
+          console.error(`Error processing file ${file}:`, err.message);
+          return null;
+        }
+      })
+      .filter(item => item !== null); // Remove any null entries from errors
     
     res.json({ nfts });
   } catch (error) {

@@ -29,6 +29,12 @@ async function pinFileToIPFS(filePath, name) {
     }
 
     try {
+        // Check if file exists before attempting to pin
+        if (!fs.existsSync(filePath)) {
+            console.error(`File not found: ${filePath}`);
+            return null;
+        }
+
         const readableStreamForFile = fs.createReadStream(filePath);
         const options = {
             pinataMetadata: {
@@ -36,40 +42,68 @@ async function pinFileToIPFS(filePath, name) {
             }
         };
 
-        const result = await pinata.pinFileToIPFS(readableStreamForFile, options);
+        // Set a timeout for the Pinata API call
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Pinata API call timed out')), 15000);
+        });
+
+        // Race between the Pinata API call and the timeout
+        const result = await Promise.race([
+            pinata.pinFileToIPFS(readableStreamForFile, options),
+            timeoutPromise
+        ]);
+
         console.log(`Successfully pinned file to IPFS with hash: ${result.IpfsHash}`);
         return result.IpfsHash;
     } catch (error) {
-        console.error('Error pinning file to IPFS:', error);
-        throw error;
+        console.error('Error pinning file to IPFS:', error.message || error);
+        // Return null instead of throwing to prevent application crash
+        return null;
     }
 }
 
 /**
  * Pins JSON metadata to IPFS via Pinata
- * @param {Object} metadata - JSON metadata to pin
+ * @param {Object} json - JSON metadata to pin
  * @param {string} name - Name for the metadata in Pinata
  * @returns {Promise<string>} - IPFS hash (CID) of the pinned metadata
  */
-async function pinJSONToIPFS(metadata, name) {
+async function pinJSONToIPFS(json, name) {
     if (!pinata) {
         console.warn('Pinata API keys not found in .env, skipping IPFS pinning');
         return null;
     }
 
     try {
+        // Validate JSON before pinning
+        if (!json || typeof json !== 'object') {
+            console.error('Invalid JSON object provided for pinning');
+            return null;
+        }
+
         const options = {
             pinataMetadata: {
                 name: name || 'NFT Metadata'
             }
         };
 
-        const result = await pinata.pinJSONToIPFS(metadata, options);
+        // Set a timeout for the Pinata API call
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Pinata JSON API call timed out')), 15000);
+        });
+
+        // Race between the Pinata API call and the timeout
+        const result = await Promise.race([
+            pinata.pinJSONToIPFS(json, options),
+            timeoutPromise
+        ]);
+
         console.log(`Successfully pinned JSON to IPFS with hash: ${result.IpfsHash}`);
         return result.IpfsHash;
     } catch (error) {
-        console.error('Error pinning JSON to IPFS:', error);
-        throw error;
+        console.error('Error pinning JSON to IPFS:', error.message || error);
+        // Return null instead of throwing to prevent application crash
+        return null;
     }
 }
 
