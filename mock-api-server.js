@@ -4,7 +4,7 @@ const path = require('path');
 
 // Create Express app
 const app = express();
-const PORT = 3000;
+const PORT = 4000;
 
 // Enable CORS for all routes
 app.use(cors());

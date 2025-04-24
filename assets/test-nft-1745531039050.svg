@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
+      <rect width="500" height="500" fill="#3498db" />
+      <circle cx="250" cy="250" r="100" fill="#e74c3c" />
+      <text x="250" y="250" font-family="Arial" font-size="24" text-anchor="middle" fill="white">NFT Test</text>
+      <text x="250" y="280" font-family="Arial" font-size="16" text-anchor="middle" fill="white">2025-04-24T21:43:59.049Z</text>
+    </svg>

@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config();
 
 // Create Express app
 const app = express();
@@ -161,6 +162,12 @@ app.use((err, req, res, next) => {
   console.error(`Error: ${err.message}`);
   res.status(500).send('500 - Server Error');
 });
+
+// Import Pinata routes
+const pinataRoutes = require('./api-routes/pinata-routes');
+
+// Use Pinata routes
+app.use('/api/pinata', pinataRoutes);
 
 // Start the server with better error handling
 app.listen(PORT, () => {

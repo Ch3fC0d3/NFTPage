@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    pre {
+      background-color: #f1f1f1;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>NFT Mock API Test</h1>
+  
+  <div>
+    <button onclick="testOwner()">Test Owner API</button>
+    <button onclick="testMintPrice()">Test Mint Price API</button>
+    <button onclick="testMint()">Test Mint API</button>
+    <button onclick="testPinataStatus()">Test Pinata Status</button>
+  </div>
+  
+  <h2>Response:</h2>
+  <pre id="response">Click a button to test an API endpoint...</pre>
+  
+  <script>
+    const API_BASE_URL = 'http://localhost:4000/api/mock';
+    const responseElement = document.getElementById('response');
+    
+    function showResponse(data) {
+      responseElement.textContent = JSON.stringify(data, null, 2);
+    }
+    
+    function showError(error) {
+      responseElement.textContent = `Error: ${error.message}`;
+      console.error(error);
+    }
+    
+    async function testOwner() {
+      try {
+        responseElement.textContent = 'Loading...';
+        const response = await fetch(`${API_BASE_URL}/owner`);
+        const data = await response.json();
+        showResponse(data);
+      } catch (error) {
+        showError(error);
+      }
+    }
+    
+    async function testMintPrice() {
+      try {
+        responseElement.textContent = 'Loading...';
+        const response = await fetch(`${API_BASE_URL}/mintPrice`);
+        const data = await response.json();
+        showResponse(data);
+      } catch (error) {
+        showError(error);
+      }
+    }
+    
+    async function testMint() {
+      try {
+        responseElement.textContent = 'Loading...';
+        const response = await fetch(`${API_BASE_URL}/mint`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ address: '0xa7630fa60bc186bcb171c80dacc953685bf975a6' })
+        });
+        const data = await response.json();
+        showResponse(data);
+      } catch (error) {
+        showError(error);
+      }
+    }
+    
+    async function testPinataStatus() {
+      try {
+        responseElement.textContent = 'Loading...';
+        const response = await fetch(`${API_BASE_URL}/pinata/status`);
+        const data = await response.json();
+        showResponse(data);
+      } catch (error) {
+        showError(error);
+      }
+    }
+  </script>
+</body>
+</html>

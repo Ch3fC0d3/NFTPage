@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NFTMan: Mint & View NFT</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <style>
+    body { 
+      background: linear-gradient(135deg, #1a1a2e, #16213e); 
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .container { padding-top: 2rem; padding-bottom: 2rem; }
+    
+    .nft-card { 
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3); 
+      border-radius: 1rem; 
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .nft-img { 
+      width: 100%; 
+      border-radius: 1rem 1rem 0 0; 
+      object-fit: cover;
+      height: 300px;
+    }
+    
+    .mint-btn { 
+      background: linear-gradient(90deg, #6C47FF, #4B2996); 
+      color: #fff; 
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 2rem;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(108, 71, 255, 0.4);
+    }
+    
+    .badge {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white !important;
+    }
+    
+    .main-card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="main-card p-4">
+          <h2 class="mb-3 text-center">NFTMan NFT Minter</h2>
+          <div class="mb-3 text-center">
+            <button id="connectBtn" class="btn btn-outline-primary">Connect Wallet</button>
+          </div>
+          <div class="mb-3 text-center">
+            <button id="mintBtn" class="btn mint-btn" disabled>Mint NFT</button>
+          </div>
+          <div class="mb-3 text-center">
+            <button id="refreshBtn" class="btn btn-secondary" disabled>Show My NFTs</button>
+          </div>
+
+          <div id="status" class="alert alert-info text-center d-none"></div>
+          <div id="nftList" class="row g-3 justify-content-center"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.12.0/dist/ethers.umd.min.js"></script>
+  <script>
+    // Constants - ensure proper URL formatting
+    const API_BASE_URL = 'http://localhost:4000/api/mock';
+    
+    // UI Elements
+    const connectBtn = document.getElementById('connectBtn');
+    const mintBtn = document.getElementById('mintBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const statusDiv = document.getElementById('status');
+    const nftList = document.getElementById('nftList');
+    
+    // State variables
+    let userAddress = null;
+    let mintPrice = null;
+    
+    // Helper functions
+    function showStatus(msg, type = 'info') {
+      statusDiv.innerHTML = msg;
+      statusDiv.className = `alert alert-${type} text-center`;
+      statusDiv.classList.remove('d-none');
+    }
+    
+    function hideStatus() {
+      statusDiv.classList.add('d-none');
+    }
+    
+    // Connect wallet
+    async function connectWallet() {
+      try {
+        showStatus('Connecting wallet...', 'info');
+        
+        // Simulate wallet connection
+        userAddress = '0xa7630fa60bc186bcb171c80dacc953685bf975a6';
+        console.log(`Connected wallet address: ${userAddress}`);
+        
+        // Check if user is contract owner
+        try {
+          const ownerResponse = await fetch(`${API_BASE_URL}/owner`);
+          const ownerData = await ownerResponse.json();
+          console.log('Contract owner:', ownerData.owner);
+        } catch (ownerError) {
+          console.error('Error checking owner:', ownerError);
+        }
+        
+        // Fetch mint price
+        try {
+          const priceResponse = await fetch(`${API_BASE_URL}/mintPrice`);
+          const priceData = await priceResponse.json();
+          mintPrice = priceData.mintPrice;
+          const mintPriceEth = ethers.formatEther(mintPrice);
+          mintBtn.textContent = `Mint NFT (${mintPriceEth} ETH)`;
+          console.log('Mint price:', mintPriceEth, 'ETH');
+        } catch (priceError) {
+          console.error('Error fetching mint price:', priceError);
+          mintBtn.textContent = 'Mint NFT';
+        }
+        
+        // Enable buttons
+        mintBtn.disabled = false;
+        refreshBtn.disabled = false;
+        
+        // Show connected status
+        showStatus(`Connected: ${userAddress.substring(0, 6)}...${userAddress.substring(38)}`, 'success');
+        
+        // Refresh NFTs
+        refreshNFTs();
+      } catch (error) {
+        console.error('Error connecting wallet:', error);
+        showStatus(`Error connecting wallet: ${error.message}`, 'danger');
+      }
+    }
+    
+    // Mint NFT
+    async function mintNFT() {
+      try {
+        showStatus('Minting NFT...', 'info');
+        
+        // Call mock mint API endpoint
+        const response = await fetch(`${API_BASE_URL}/mint`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ address: userAddress })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          console.log('Mock mint successful, token ID:', data.tokenId);
+          showStatus(`NFT minted successfully! Token ID: ${data.tokenId}`, 'success');
+          
+          // If IPFS hash is available, show it
+          if (data.ipfsHash) {
+            console.log('Pinned to IPFS:', data.ipfsHash);
+            showStatus(`NFT minted successfully! Token ID: ${data.tokenId}<br>IPFS: <a href="${data.ipfsUrl}" target="_blank">${data.ipfsHash}</a>`, 'success');
+          }
+        } else {
+          throw new Error(data.error || 'Unknown error during minting');
+        }
+        
+        // Refresh NFTs
+        refreshNFTs();
+      } catch (error) {
+        console.error('Error minting NFT:', error);
+        showStatus(`Error minting NFT: ${error.message}`, 'danger');
+      }
+    }
+    
+    // Refresh NFTs
+    async function refreshNFTs() {
+      if (!userAddress) {
+        nftList.innerHTML = '<div class="col-12 text-center">Connect your wallet to view your NFTs</div>';
+        return;
+      }
+      
+      refreshBtn.disabled = true;
+      nftList.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+      
+      try {
+        // Get balance from mock API
+        console.log(`Calling balanceOf for address: ${userAddress}`);
+        const balanceResponse = await fetch(`${API_BASE_URL}/balanceOf/${userAddress}`);
+        const balanceData = await balanceResponse.json();
+        const balanceNum = balanceData.balance;
+        
+        if (balanceNum === 0) {
+          nftList.innerHTML = '<div class="col-12 text-center">You don\'t own any NFTs yet</div>';
+          refreshBtn.disabled = false;
+          return;
+        }
+        
+        nftList.innerHTML = '';
+        
+        // Loop through all NFTs
+        for (let i = 0; i < balanceNum; i++) {
+          try {
+            // Get token ID from mock API
+            const tokenIdResponse = await fetch(`${API_BASE_URL}/tokenOfOwnerByIndex/${userAddress}/${i}`);
+            const tokenIdData = await tokenIdResponse.json();
+            const tokenId = tokenIdData.tokenId;
+            
+            // Get token URI from mock API
+            const tokenURIResponse = await fetch(`${API_BASE_URL}/tokenURI/${tokenId}`);
+            const tokenURIData = await tokenURIResponse.json();
+            
+            // Create card element
+            const nftCard = document.createElement('div');
+            nftCard.className = 'col-md-6 col-lg-4 mb-4';
+            
+            try {
+              // Parse the token URI which contains the metadata
+              const metadata = JSON.parse(tokenURIData.tokenURI);
+              
+              // Prepare image URL
+              let imageUrl = metadata.image;
+              
+              // Handle relative URLs
+              if (imageUrl && !imageUrl.startsWith('http')) {
+                const baseUrl = 'http://localhost:4000';
+                imageUrl = `${baseUrl}${imageUrl}`;
+              }
+              
+              // Create attributes HTML
+              let attributesHtml = '';
+              if (metadata.attributes && Array.isArray(metadata.attributes)) {
+                attributesHtml = '<div class="mt-3"><div class="row g-2">';
+                for (const attr of metadata.attributes) {
+                  attributesHtml += `
+                    <div class="col-6">
+                      <div class="badge w-100 p-2 mb-1">
+                        <div class="small">${attr.trait_type}</div>
+                        <div class="fw-bold">${attr.value}</div>
+                      </div>
+                    </div>
+                  `;
+                }
+                attributesHtml += '</div></div>';
+              }
+              
+              // Render NFT card
+              nftCard.innerHTML = `
+                <div class="card h-100 nft-card">
+                  <div class="position-relative overflow-hidden">
+                    <img src="${imageUrl || 'https://via.placeholder.com/500x500?text=No+Image'}" class="nft-img" alt="NFT #${tokenId}">
+                    <div class="position-absolute top-0 end-0 m-2">
+                      <span class="badge rounded-pill bg-primary">#${tokenId}</span>
+                    </div>
+                  </div>
+                  <div class="card-body text-center">
+                    <h5 class="card-title fw-bold">${metadata.name}</h5>
+                    <p class="card-text">${metadata.description}</p>
+                    ${attributesHtml}
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                      <small>Token ID: ${tokenId}</small>
+                      <button class="btn btn-sm btn-outline-light view-btn" data-id="${tokenId}">View Details</button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            } catch (metadataError) {
+              console.error('Error parsing metadata:', metadataError);
+              
+              // Fallback display
+              nftCard.innerHTML = `
+                <div class="card h-100 nft-card">
+                  <div class="position-relative overflow-hidden">
+                    <div class="bg-dark d-flex align-items-center justify-content-center" style="height: 300px;">
+                      <div class="text-center p-4">
+                        <div class="display-1 mb-3">🎨</div>
+                        <h5>NFT #${tokenId}</h5>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-body text-center">
+                    <h5 class="card-title fw-bold">NFT #${tokenId}</h5>
+                    <div class="alert alert-warning">Metadata unavailable</div>
+                    <div class="mt-3">
+                      <small>Token ID: ${tokenId}</small>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+            
+            nftList.appendChild(nftCard);
+          } catch (tokenError) {
+            console.error(`Error fetching token at index ${i}:`, tokenError);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading NFTs:', error);
+        nftList.innerHTML = `<div class="col-12 text-center text-danger">Error loading NFTs: ${error.message}</div>`;
+      }
+      
+      refreshBtn.disabled = false;
+    }
+    
+    // Event listeners
+    connectBtn.addEventListener('click', connectWallet);
+    mintBtn.addEventListener('click', mintNFT);
+    refreshBtn.addEventListener('click', refreshNFTs);
+  </script>
+</body>
+</html>
