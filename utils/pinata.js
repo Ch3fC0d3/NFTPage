@@ -5,9 +5,16 @@ const path = require('path');
 require('dotenv').config();
 
 // Initialize Pinata client with API keys from .env
-const pinata = process.env.PINATA_API_KEY && process.env.PINATA_API_SECRET
-    ? pinataSDK(process.env.PINATA_API_KEY, process.env.PINATA_API_SECRET)
-    : null;
+let pinata = null;
+if (process.env.PINATA_API_KEY && process.env.PINATA_API_SECRET) {
+    try {
+        // The correct way to initialize the Pinata SDK
+        pinata = new pinataSDK({ pinataApiKey: process.env.PINATA_API_KEY, pinataSecretApiKey: process.env.PINATA_API_SECRET });
+        console.log('Pinata SDK initialized successfully');
+    } catch (error) {
+        console.error('Error initializing Pinata SDK:', error.message);
+    }
+}
 
 /**
  * Pins a file to IPFS via Pinata
